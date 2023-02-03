@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity = 0.8.17;
+pragma solidity =0.8.17;
 
 contract OracleMock {
   int public price = 1000e8; // ETH/USD

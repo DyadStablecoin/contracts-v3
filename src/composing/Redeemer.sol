@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity = 0.8.17;
+pragma solidity =0.8.17;
 
 // import {IDNft, Permission} from "../interfaces/IDNft.sol";
 // import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
