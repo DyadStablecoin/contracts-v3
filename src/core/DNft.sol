@@ -8,7 +8,7 @@ import {IDNft} from "../interfaces/IDNft.sol";
 import {Dyad} from "./Dyad.sol";
 import {PermissionManager} from "./PermissionManager.sol";
 
-contract DNft is IDNft, ERC721Enumerable {
+contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   uint public immutable MAX_SUPPLY;            // Max supply of DNfts
   int  public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
@@ -19,7 +19,6 @@ contract DNft is IDNft, ERC721Enumerable {
       address _dyad,
       address _oracle, 
       uint    _maxSupply,
-      uint    _minTimeBetweenSync,
       int     _minMintDyadDeposit, 
       address[] memory _insiders
   ) ERC721("Dyad NFT", "dNFT") {

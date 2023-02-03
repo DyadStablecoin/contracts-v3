@@ -11,7 +11,6 @@ contract DeployBase is Script, Parameters {
   function deploy(
     address _oracle, 
     uint    _maxSupply,
-    uint    _minTimeBetweenSync,
     int     _minMintDyadDeposit, 
     address[] memory _insiders
   ) public payable returns (
@@ -25,7 +24,6 @@ contract DeployBase is Script, Parameters {
       address(dyad),
       _oracle,
       _maxSupply,
-      _minTimeBetweenSync,
       _minMintDyadDeposit, 
       _insiders
     );
