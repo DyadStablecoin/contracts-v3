@@ -34,11 +34,13 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
  * allowances. See {IERC20-approve}.
  */
 contract ERC20 is Context, IERC20, IERC20Metadata {
-    mapping(address => uint256) private _balances;
+    // change from private to internal
+    mapping(address => uint256) internal _balances;
+    //                          ^^^^^^^^
 
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    // only change to the ERC20 openzeppelin implementation from private to internal 
+    // change from private to internal
     uint256 internal _totalSupply;                          
     //      ^^^^^^^^
 
