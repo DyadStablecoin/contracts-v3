@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import "forge-std/console.sol";
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {ERC20} from "./ERC20.sol";
 
@@ -43,10 +44,10 @@ contract ERC20Relative is ERC20 {
     internal 
     override
   {
-    amount = amount.divWadDown(_totalSupply);
     _beforeTokenTransfer(address(0), account, amount);
     _totalSupply += amount;
-    _balances[account] += amount;
+    console.log(amount.divWadDown(_totalSupply));
+    _balances[account] += amount.divWadDown(_totalSupply);
     emit Transfer(address(0), account, amount);
     _afterTokenTransfer(address(0), account, amount);
   }
@@ -55,10 +56,9 @@ contract ERC20Relative is ERC20 {
     internal 
     override
   {
-    amount = amount.divWadDown(_totalSupply);
     _beforeTokenTransfer(account, address(0), amount);
     _totalSupply -= amount;
-    _balances[account] -= amount;
+    _balances[account] -= amount.divWadDown(_totalSupply);
     emit Transfer(account, address(0), amount);
     _afterTokenTransfer(account, address(0), amount);
   }
