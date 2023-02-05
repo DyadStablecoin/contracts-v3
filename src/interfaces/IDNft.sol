@@ -9,9 +9,10 @@ interface IDNft {
   event Moved      (uint indexed from, uint indexed to, uint amount);
   event Liquidated (address indexed to, uint indexed id);
   event Withdrawn  (uint indexed from, address indexed to, uint amount);
-  event Rebased    ();
+  event Rebased    (uint supplyDelta);
 
   error MaxSupply         ();
+  error SamePrice         ();
   error DepositTooLow     ();
   error NotLiquidatable   ();
   error MissingShares     ();

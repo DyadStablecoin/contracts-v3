@@ -104,16 +104,18 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       emit Moved(from, to, shares);
   }
 
+  // Rebase DYAD total supply to reflect the latest price changes
   function rebase() external {
       uint newEthPrice = _getEthPrice();
+      if (newEthPrice == ethPrice) revert SamePrice();
       bool rebaseUp    = newEthPrice > ethPrice;
       uint priceChange = rebaseUp ? (newEthPrice - ethPrice).divWadDown(ethPrice)
                                   : (ethPrice - newEthPrice).divWadDown(ethPrice);
-      uint dyadDelta   = (dyad.totalSupply()+totalDeposit).mulWadDown(priceChange);
-      rebaseUp ? totalDeposit += dyadDelta
-               : totalDeposit -= dyadDelta;
+      uint supplyDelta = (dyad.totalSupply()+totalDeposit).mulWadDown(priceChange);
+      rebaseUp ? totalDeposit += supplyDelta
+               : totalDeposit -= supplyDelta;
       ethPrice = newEthPrice; 
-      emit Rebased();
+      emit Rebased(supplyDelta);
   }
 
   // Withdraw `amount` of deposited DYAD as an ERC-20 token from a dNFT
