@@ -217,16 +217,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
     view 
     returns (uint) {
       if (totalShares == 0) { return _deposit; }
-      // (deposit * totalShares) / totalDeposit
       return _deposit.mulWadDown(totalShares).divWadDown(totalDeposit);
-  }
-
-  function _shares2deposit(uint shares) 
-    private
-    view 
-    returns (uint) {
-      // (shares * totalDeposit) / totalShares
-      return shares.mulWadDown(totalDeposit).divWadDown(totalShares);
   }
 
   // ETH price in USD
