@@ -17,7 +17,8 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
 
-  uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 30000 bps or 300%
+  uint public constant  MIN_COLLATERIZATION_RATIO = 3e18;     // 300%
+  uint public constant  LIQUIDATION_THRESHLD      = 0.001e18; // 0.001%
   uint public immutable MAX_SUPPLY;            // Max supply of DNfts
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
@@ -156,8 +157,8 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   function liquidate(uint id, address to) 
     external 
     payable {
-      uint shares = id2Shares[id];
-      uint threshold = totalShares.mulWadDown(0.001e18);
+      uint shares    = id2Shares[id];
+      uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHLD);
       if (shares > threshold) { revert NotLiquidatable(); }
       uint newDeposit = _eth2dyad(msg.value);
       uint newShares  = _addShares(id, newDeposit);
