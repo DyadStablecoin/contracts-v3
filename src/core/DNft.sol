@@ -81,13 +81,15 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   }
 
   // Mint new insider DNft to `to` 
-  function mintInsider(address to)
+  function mint2Insider(address to)
     external 
     payable 
       onlyOwner
     returns (uint) {
       if (++insiderMints >= INSIDER_MINTS) revert InsiderMintsExceeded();
-      return _mintNft(to); 
+      uint id = _mintNft(to);
+      id2Locked[id] = true;
+      return id; 
   }
 
   // Mint new DNft to `to`
@@ -135,13 +137,13 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       emit Rebased(supplyDelta);
   }
 
-  // Withdraw `amount` of deposited DYAD as an ERC-20 token from a dNFT
+  // Withdraw `_deposit` as an ERC-20 token from dNFT
   function withdraw(uint from, address to, uint _deposit)
     external 
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
-      _subShares(from, _deposit);
+      _subShares(from, _deposit); // fails if `from` doesn't have enough shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + _deposit);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }

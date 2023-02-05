@@ -38,6 +38,11 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IDNft.DepositTooLow.selector));
     dNft.mint{value: 1 ether}(address(this));
   }
+  function testMint2Insider() public {
+    vm.prank(MAINNET_OWNER);
+    uint id = dNft.mint2Insider(address(1));
+    assertTrue(dNft.id2Locked(id));
+  }
   // function testCannotMintExceedsMaxSupply() public {
   //   uint nftsLeft = dNft.MAX_SUPPLY() - dNft.totalSupply();
   //   for (uint i = 0; i < nftsLeft; i++) {
