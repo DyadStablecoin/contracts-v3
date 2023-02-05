@@ -11,7 +11,7 @@ contract DeployBase is Script, Parameters {
   function deploy(
     address _oracle, 
     uint    _maxSupply,
-    int     _minMintDyadDeposit, 
+    uint    _minMintDyadDeposit, 
     address[] memory _insiders
   ) public payable returns (
     address,

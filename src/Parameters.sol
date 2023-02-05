@@ -18,9 +18,8 @@ contract Parameters {
     0xC9c1281148460E075AD5dEFA856dAc005773A2A6  // sdk
   ];
   address GOERLI_ORACLE = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
-  uint GOERLI_MAX_SUPPLY                    = 2000;
-  uint GOERLI_MIN_TIME_BETWEEN_SYNC         = 5 minutes;
-  int  GOERLI_MIN_MINT_DYAD_DEPOSIT         = 1e18;
+  uint GOERLI_MAX_SUPPLY            = 2000;
+  uint GOERLI_MIN_MINT_DYAD_DEPOSIT = 1e18;
 
   // ---------------- Mainnet ----------------
   address[] MAINNET_INSIDERS = [ //TODO: still to be determined
@@ -31,13 +30,6 @@ contract Parameters {
     0x414b60745072088d013721b4a28a0559b1A9d213
   ];
   address MAINNET_ORACLE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
-  uint MAINNET_MAX_SUPPLY                    = 10_000;
-  uint MAINNET_MIN_TIME_BETWEEN_SYNC         = 10 minutes;
-  int  MAINNET_MIN_MINT_DYAD_DEPOSIT         = 5000e18; // 5k
-
-  // ---------------- AutoClaim ----------------
-  int  FEE           = 0.01e18;
-  uint FEE_COLLECTOR = 0;       // dNft id of fee collector
-  uint MAX_NUMBER_OF_CLAIMERS = 20;
+  uint MAINNET_MAX_SUPPLY            = 10_000;
+  uint MAINNET_MIN_MINT_DYAD_DEPOSIT = 5000e18; // 5k
 }
-
