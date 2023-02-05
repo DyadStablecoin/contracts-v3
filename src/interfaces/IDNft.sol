@@ -3,7 +3,7 @@ pragma solidity = 0.8.17;
 
 interface IDNft {
   struct Nft {
-    uint deposit;             // deposited DYAD
+    uint shares;              // shares of deposited DYAD
     uint lastOwnershipChange; // block number of the last ownership change
     bool isActive;
   }
@@ -25,5 +25,5 @@ interface IDNft {
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
-  // function mint(address to) external payable returns (uint id);
+  function mint(address to) external payable returns (uint id);
 }

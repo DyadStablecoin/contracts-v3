@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IDNft} from "../interfaces/IDNft.sol";
@@ -9,8 +11,14 @@ import {Dyad} from "./Dyad.sol";
 import {PermissionManager} from "./PermissionManager.sol";
 
 contract DNft is IDNft, ERC721Enumerable, PermissionManager {
+  using SafeCast          for int256;
+  using FixedPointMathLib for uint256;
+
   uint public immutable MAX_SUPPLY;            // Max supply of DNfts
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
+
+  uint public totalDeposit; // Sum of all deposits
+  uint public totalShares;  // Sum of all shares
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -32,6 +40,18 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       }
   }
 
+  // Mint new DNft to `to` 
+  function mint(address to)
+    external 
+    payable 
+    returns (uint) {
+      uint newDeposit = _eth2dyad(msg.value);
+      if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
+      uint id = _mintNft(to); 
+      // _addShares(newDeposit);
+      return id;
+  }
+
   // Mint new DNft to `to`
   function _mintNft(address to)
     private 
@@ -41,5 +61,30 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       _mint(to, id); // will revert if `to` == address(0)
       emit Minted(to, id);
       return id;
+  }
+
+  // Return the value of `eth` in DYAD
+  function _eth2dyad(uint eth) 
+    private 
+    view 
+    returns (uint) {
+      return eth * _getEthPrice() / 1e8; 
+  }
+
+  function _deposit2shares(uint deposit) 
+    private 
+    view 
+    returns (uint) {
+      // (totalShares / totalDeposit) * deposit
+      return totalShares.divWadDown(totalDeposit).mulWadUp(deposit);
+  }
+
+  // ETH price in USD
+  function _getEthPrice() 
+    private 
+    view 
+    returns (uint) {
+      ( , int price, , , ) = oracle.latestRoundData();
+      return price.toUint256();
   }
 }
