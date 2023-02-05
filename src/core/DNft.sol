@@ -213,7 +213,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   }
 
   function _shares2deposit(uint shares) 
-    private 
+    private
     view 
     returns (uint) {
       // (shares * totalDeposit) / totalShares

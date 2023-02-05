@@ -24,6 +24,8 @@ contract DNftsTest is BaseTest {
 
   // -------------------- mint --------------------
   function testMintNft() public {
+    dNft.mint{value: 5 ether}(address(this));
+    dNft.rebase();
   }
 //   function testCannotMintToZeroAddress() public {
 //     vm.expectRevert("ERC721: mint to the zero address");
@@ -42,4 +44,17 @@ contract DNftsTest is BaseTest {
 //     vm.expectRevert(abi.encodeWithSelector(IDNft.MaxSupply.selector));
 //     dNft.mint{value: 5 ether}(address(this));
 //   }
+
+  // -------------------- rebase --------------------
+  function testRebase() public {
+    dNft.mint{value: 6 ether}(address(this));
+    uint id2 = dNft.mint{value: 6 ether}(address(this));
+
+    oracleMock.setPrice(1100e8);
+    dNft.rebase();
+
+    dNft.withdraw(id2, address(1), 1000e18);
+
+    // uint id3 = dNft.mint{value: 6 ether}(address(this));
+  }
 }
