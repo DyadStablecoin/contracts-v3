@@ -21,7 +21,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   uint public constant  INSIDER_MINTS             = 300; 
   uint public constant  PUBLIC_MINTS              = 1700; 
   uint public constant  MIN_COLLATERIZATION_RATIO = 3e18;     // 300%
-  uint public constant  LIQUIDATION_THRESHLD      = 0.001e18; // 0.001%
+  uint public constant  LIQUIDATION_THRESHLD      = 0.001e18; // 0.1%
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
   uint public ethPrice;
@@ -151,15 +151,15 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return newCollatRatio;
   }
 
-  // Redeem DYAD for ETH
+  // Redeem DYAD ERC20 for ETH
   function redeemDyad(uint from, address to, uint _dyad)
     external 
       isOwnerOrHasPermission(from, Permission.REDEEM_DYAD)
       isNotLocked(from)
     returns (uint) { 
-      dyad.burn(msg.sender, _dyad);
+      dyad.burn(msg.sender, _dyad); // reverts if `from` doesn't have enough DYAD
       uint eth = _dyad2eth(_dyad);
-      to.safeTransferETH(eth); // re-entrancy vector
+      to.safeTransferETH(eth);      // re-entrancy vector
       emit Redeemed(from, _dyad, to, eth);
       return eth;
   }
@@ -170,7 +170,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(from, Permission.REDEEM_DEPOSIT)
       isNotLocked(from)
     returns (uint) { 
-      _subShares(from, _deposit);
+      _subShares(from, _deposit); // fails if `from` doesn't have enough shares
       uint eth = _dyad2eth(_deposit);
       to.safeTransferETH(eth); // re-entrancy vector
       emit Redeemed(from, _deposit, to, eth);
