@@ -5,6 +5,9 @@ interface IPermissionManager {
   enum Permission { DEPOSIT, REDEEM_DYAD, REDEEM_DEPOSIT, MOVE, WITHDRAW }
 
   error MissingPermission();
+  error NotOwner         ();
+
+  event Modified(uint indexed id, PermissionSet[] permissions);
 
   struct PermissionSet {
     address operator;         // The address of the operator

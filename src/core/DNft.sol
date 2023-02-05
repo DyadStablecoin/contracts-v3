@@ -30,6 +30,9 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
 
   mapping(uint => uint) public id2Shares;
 
+  modifier isOwner(uint id) {
+    if (ownerOf(id) != msg.sender) revert NotOwner(); _;
+  }
   modifier isOwnerOrHasPermission(uint id, Permission permission) {
     if (
       ownerOf(id) != msg.sender && 
@@ -160,6 +163,13 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       uint newShares  = _addShares(id, newDeposit);
       if (shares + newShares <= threshold) { revert MissingShares(); }
       emit Liquidated(to, id); 
+  }
+
+  function grant(uint id, PermissionSet[] calldata permissionSets) 
+    external 
+      isOwner(id) 
+    {
+      _grant(id, permissionSets);
   }
 
   function _addShares(uint id, uint _deposit)
