@@ -89,6 +89,16 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return newDeposit;
   }
 
+  // Move `shares` `from` one dNFT `to` another dNFT
+  function move(uint from, uint to, uint shares) 
+    external 
+      isOwnerOrHasPermission(from, Permission.MOVE) 
+    {
+      id2Shares[from] -= shares;
+      id2Shares[to]   += shares;
+      emit Moved(from, to, shares);
+  }
+
   // Redeem DYAD for ETH
   function redeem(uint from, address to, uint amount)
     external 

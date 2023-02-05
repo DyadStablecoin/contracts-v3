@@ -5,6 +5,7 @@ interface IDNft {
   event AddedShares(uint indexed id, uint amount);
   event Minted     (address indexed to, uint indexed id);
   event Redeemed   (uint indexed from, uint dyad, address indexed to, uint eth);
+  event Moved      (uint indexed from, uint indexed to, uint amount);
 
   error MaxSupply    ();
   error DepositTooLow();
