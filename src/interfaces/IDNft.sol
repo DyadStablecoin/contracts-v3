@@ -17,7 +17,6 @@ interface IDNft {
   error MissingShares     ();
   error InsufficientShares();
   error CrTooLow          ();
-  error EthPriceUnchanged ();
 
   /**
    * @notice Mint a new dNFT

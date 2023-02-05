@@ -102,8 +102,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
 
   function rebase() external {
       uint newEthPrice = _getEthPrice();
-      if (newEthPrice == ethPrice) { revert EthPriceUnchanged(); }
-      bool rebaseUp = newEthPrice > ethPrice;
+      bool rebaseUp    = newEthPrice > ethPrice;
       uint priceChange = rebaseUp ? (newEthPrice - ethPrice).divWadDown(ethPrice)
                                   : (ethPrice - newEthPrice).divWadDown(ethPrice);
       uint dyadDelta   = (dyad.totalSupply()+totalDeposit).mulWadDown(priceChange);
