@@ -17,6 +17,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
 
+  uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 30000 bps or 300%
   uint public immutable MAX_SUPPLY;            // Max supply of DNfts
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
@@ -97,6 +98,32 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       id2Shares[from] -= shares;
       id2Shares[to]   += shares;
       emit Moved(from, to, shares);
+  }
+
+  function rebase() external {
+      uint newEthPrice = _getEthPrice();
+      if (newEthPrice == ethPrice) { revert EthPriceUnchanged(); }
+      bool rebaseUp = newEthPrice > ethPrice;
+      uint priceChange = rebaseUp ? (newEthPrice - ethPrice).divWadDown(ethPrice)
+                                  : (ethPrice - newEthPrice).divWadDown(ethPrice);
+      uint dyadDelta   = (dyad.totalSupply()+totalDeposit).mulWadDown(priceChange);
+      rebaseUp ? totalDeposit += dyadDelta
+               : totalDeposit -= dyadDelta;
+      ethPrice = newEthPrice; 
+      emit Rebased();
+  }
+
+  // Withdraw `amount` of deposited DYAD as an ERC-20 token from a dNFT
+  function withdraw(uint from, address to, uint _deposit)
+    external 
+      isOwnerOrHasPermission(from, Permission.WITHDRAW)
+    returns (uint) {
+      _subShares(from, _deposit);
+      uint collatVault    = address(this).balance * _getEthPrice()/1e8;
+      uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + _deposit);
+      if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      emit Withdrawn(from, to, _deposit);
+      return newCollatRatio;
   }
 
   // Redeem DYAD for ETH
