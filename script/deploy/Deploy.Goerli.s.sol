@@ -9,9 +9,8 @@ contract DeployGoerli is Script, Parameters {
   function run() public {
       new DeployBase().deploy(
         GOERLI_ORACLE,
-        GOERLI_MAX_SUPPLY,
-        GOERLI_MIN_MINT_DYAD_DEPOSIT,
-        GOERLI_INSIDERS
+        GOERLI_MIN_MINT_DYAD_DEPOSIT, 
+        GOERLI_OWNER
       );
   }
 }

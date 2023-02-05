@@ -11,7 +11,8 @@ interface IDNft {
   event Withdrawn  (uint indexed from, address indexed to, uint amount);
   event Rebased    (uint supplyDelta);
 
-  error MaxSupply         ();
+  error InsiderMintsExceeded();
+  error PublicMintsExceeded ();
   error SamePrice         ();
   error DepositTooLow     ();
   error NotLiquidatable   ();
@@ -20,18 +21,4 @@ interface IDNft {
   error CrTooLow          ();
   error Locked            ();
   error NotLocked         ();
-
-  /**
-   * @notice Mint a new dNFT
-   * @dev Will revert:
-   *      - If `msg.value` is not enough to cover the deposit minimum
-   *      - If the max supply of dNFTs has been reached
-   *      - If `to` is the zero address
-   * @dev Emits:
-   *      - Minted
-   *      - DyadMinted
-   * @param to The address to mint the dNFT to
-   * @return id Id of the new dNFT
-   */
-  function mint(address to) external payable returns (uint id);
 }

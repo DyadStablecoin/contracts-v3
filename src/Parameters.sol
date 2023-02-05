@@ -20,6 +20,7 @@ contract Parameters {
   address GOERLI_ORACLE = 0xD4a33860578De61DBAbDc8BFdb98FD742fA7028e;
   uint GOERLI_MAX_SUPPLY            = 2000;
   uint GOERLI_MIN_MINT_DYAD_DEPOSIT = 1e18;
+  address GOERLI_OWNER = 0xEd6715D2172BFd50C2DBF608615c2AB497904803;
 
   // ---------------- Mainnet ----------------
   address[] MAINNET_INSIDERS = [ //TODO: still to be determined
@@ -32,4 +33,5 @@ contract Parameters {
   address MAINNET_ORACLE = 0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419;
   uint MAINNET_MAX_SUPPLY            = 10_000;
   uint MAINNET_MIN_MINT_DYAD_DEPOSIT = 5000e18; // 5k
+  address MAINNET_OWNER = 0xEd6715D2172BFd50C2DBF608615c2AB497904803;
 }

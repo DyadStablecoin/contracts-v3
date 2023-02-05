@@ -6,25 +6,30 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "@solmate/src/utils/SafeTransferLib.sol";
+import {Owned} from "@solmate/src/auth/Owned.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IDNft} from "../interfaces/IDNft.sol";
 import {Dyad} from "./Dyad.sol";
 import {PermissionManager} from "./PermissionManager.sol";
 
-contract DNft is IDNft, ERC721Enumerable, PermissionManager {
+contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   using SafeTransferLib   for address;
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
 
+  uint public constant  INSIDER_MINTS             = 300; 
+  uint public constant  PUBLIC_MINTS              = 1700; 
   uint public constant  MIN_COLLATERIZATION_RATIO = 3e18;     // 300%
   uint public constant  LIQUIDATION_THRESHLD      = 0.001e18; // 0.001%
-  uint public immutable MAX_SUPPLY;            // Max supply of DNfts
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
   uint public ethPrice;
   uint public totalDeposit; // Sum of all deposits
   uint public totalShares;  // Sum of all shares
+
+  uint public insiderMints;
+  uint public publicMints;
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -52,20 +57,14 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   constructor(
       address _dyad,
       address _oracle, 
-      uint    _maxSupply,
       uint    _minMintDyadDeposit, 
-      address[] memory _insiders
-  ) ERC721("Dyad NFT", "dNFT") {
+      address _owner
+  ) ERC721("Dyad NFT", "dNFT") 
+    Owned(_owner) {
       dyad                  = Dyad(_dyad);
       oracle                = IAggregatorV3(_oracle);
-      MAX_SUPPLY            = _maxSupply;
       MIN_MINT_DYAD_DEPOSIT = _minMintDyadDeposit;
       ethPrice              = _getEthPrice();
-
-      for (uint i = 0; i < _insiders.length; i++) {
-        uint id = _mintNft(_insiders[i]); // insiders do not require a DYAD deposit
-        id2Locked[id] = true;
-      }
   }
 
   // Mint new DNft to `to` 
@@ -73,6 +72,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
     external 
     payable 
     returns (uint) {
+      if (++publicMints >= PUBLIC_MINTS) revert PublicMintsExceeded();
       uint newDeposit = _eth2dyad(msg.value);
       if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
       uint id = _mintNft(to); 
@@ -80,12 +80,21 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return id;
   }
 
+  // Mint new insider DNft to `to` 
+  function mintInsider(address to)
+    external 
+    payable 
+      onlyOwner
+    returns (uint) {
+      if (++insiderMints >= INSIDER_MINTS) revert InsiderMintsExceeded();
+      return _mintNft(to); 
+  }
+
   // Mint new DNft to `to`
   function _mintNft(address to)
     private 
     returns (uint) {
       uint id = totalSupply();
-      if (id >= MAX_SUPPLY) { revert MaxSupply(); }
       _mint(to, id); // will revert if `to` == address(0)
       emit Minted(to, id);
       return id;

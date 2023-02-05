@@ -10,9 +10,8 @@ import {Parameters} from "../../src/Parameters.sol";
 contract DeployBase is Script, Parameters {
   function deploy(
     address _oracle, 
-    uint    _maxSupply,
     uint    _minMintDyadDeposit, 
-    address[] memory _insiders
+    address _owner
   ) public payable returns (
     address,
     address
@@ -23,9 +22,8 @@ contract DeployBase is Script, Parameters {
     DNft dNft = new DNft(
       address(dyad),
       _oracle,
-      _maxSupply,
       _minMintDyadDeposit, 
-      _insiders
+      _owner
     );
     dyad.transferOwnership(address(dNft));
 
