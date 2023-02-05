@@ -2,12 +2,7 @@
 pragma solidity = 0.8.17;
 
 interface IDNft {
-  struct Nft {
-    uint shares;              // shares of deposited DYAD
-    bool isActive;
-  }
-
-  event AddedShares(uint indexed id, uint shares);
+  event AddedShares(uint indexed id, uint amount);
   event Minted     (address indexed to, uint indexed id);
   event Redeemed   (uint indexed from, uint dyad, address indexed to, uint eth);
 

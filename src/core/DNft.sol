@@ -27,7 +27,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   Dyad          public dyad;
   IAggregatorV3 public oracle;
 
-  mapping(uint => Nft) public id2Nft;
+  mapping(uint => uint) public id2Shares;
 
   modifier isOwnerOrHasPermission(uint id, Permission permission) {
     if (
@@ -78,6 +78,17 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return id;
   }
 
+  // Deposit ETH
+  function deposit(uint id) 
+    external 
+      isOwnerOrHasPermission(id, Permission.DEPOSIT)
+    payable
+    returns (uint) {
+      uint newDeposit = _eth2dyad(msg.value);
+      _addShares(id, newDeposit);
+      return newDeposit;
+  }
+
   // Redeem DYAD for ETH
   function redeem(uint from, address to, uint amount)
     external 
@@ -90,13 +101,13 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return eth;
   }
 
-  function _addShares(uint id, uint deposit)
+  function _addShares(uint id, uint _deposit)
     private
     returns (uint) {
-      uint shares        = _deposit2shares(deposit);
-      id2Nft[id].shares += shares;
-      totalDeposit      += deposit;
-      totalShares       += shares;
+      uint shares    = _deposit2shares(_deposit);
+      id2Shares[id] += shares;
+      totalDeposit  += _deposit;
+      totalShares   += shares;
       emit AddedShares(id, shares);
       return shares;
   }
@@ -109,13 +120,13 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return eth * _getEthPrice() / 1e8; 
   }
 
-  function _deposit2shares(uint deposit) 
+  function _deposit2shares(uint _deposit) 
     private 
     view 
     returns (uint) {
-      if (totalShares == 0) { return deposit; }
+      if (totalShares == 0) { return _deposit; }
       // (deposit * totalShares) / totalDeposit
-      return deposit.mulWadDown(totalShares).divWadDown(totalDeposit);
+      return _deposit.mulWadDown(totalShares).divWadDown(totalDeposit);
   }
 
   function _shares2deposit(uint shares) 

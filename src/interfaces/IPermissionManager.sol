@@ -2,7 +2,7 @@
 pragma solidity =0.8.17;
 
 interface IPermissionManager {
-  enum Permission { ACTIVATE, DEACTIVATE, REDEEM }
+  enum Permission { DEPOSIT, REDEEM }
 
   error MissingPermission();
 
