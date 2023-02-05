@@ -100,14 +100,26 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   }
 
   // Redeem DYAD for ETH
-  function redeem(uint from, address to, uint amount)
+  function redeemDyad(uint from, address to, uint _dyad)
     external 
-      isOwnerOrHasPermission(from, Permission.REDEEM)
+      isOwnerOrHasPermission(from, Permission.REDEEM_DYAD)
     returns (uint) { 
-      dyad.burn(msg.sender, amount);
-      uint eth = amount*1e8 / _getEthPrice();
+      dyad.burn(msg.sender, _dyad);
+      uint eth = _dyad*1e8 / _getEthPrice();
       to.safeTransferETH(eth); // re-entrancy vector
-      emit Redeemed(from, amount, to, eth);
+      emit Redeemed(from, _dyad, to, eth);
+      return eth;
+  }
+
+  // Redeem deposit for ETH
+  function redeemDeposit(uint from, address to, uint _deposit)
+    external 
+      isOwnerOrHasPermission(from, Permission.REDEEM_DEPOSIT)
+    returns (uint) { 
+      _subShares(from, _deposit);
+      uint eth = _deposit*1e8 / _getEthPrice();
+      to.safeTransferETH(eth); // re-entrancy vector
+      emit Redeemed(from, _deposit, to, eth);
       return eth;
   }
 
@@ -132,6 +144,17 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       totalDeposit  += _deposit;
       totalShares   += shares;
       emit AddedShares(id, shares);
+      return shares;
+  }
+
+  function _subShares(uint id, uint _deposit)
+    private
+    returns (uint) {
+      uint shares    = _deposit2shares(_deposit);
+      id2Shares[id] -= shares;
+      totalDeposit  -= _deposit;
+      totalShares   -= shares;
+      emit RemovedShares(id, shares);
       return shares;
   }
 
