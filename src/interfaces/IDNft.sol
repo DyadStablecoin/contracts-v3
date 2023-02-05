@@ -4,11 +4,12 @@ pragma solidity = 0.8.17;
 interface IDNft {
   struct Nft {
     uint shares;              // shares of deposited DYAD
-    uint lastOwnershipChange; // block number of the last ownership change
     bool isActive;
   }
 
-  event Minted(address indexed to, uint indexed id);
+  event AddedShares(uint indexed id, uint shares);
+  event Minted     (address indexed to, uint indexed id);
+  event Redeemed   (uint indexed from, uint dyad, address indexed to, uint eth);
 
   error MaxSupply    ();
   error DepositTooLow();

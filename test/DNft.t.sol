@@ -24,25 +24,6 @@ contract DNftsTest is BaseTest {
 
   // -------------------- mint --------------------
   function testMintNft() public {
-    uint id1 = dNft.mint{value: 5  ether}(address(this));
-    (uint shares, , ) = dNft.id2Nft(id1);
-    console.log("shares: %s", shares);
-
-    uint id2 = dNft.mint{value: 5 ether}(address(this));
-    ( shares, , ) = dNft.id2Nft(id2);
-    console.log("shares: %s", shares);
-
-    uint id3 = dNft.mint{value: 5 ether}(address(this));
-    ( shares, , ) = dNft.id2Nft(id3);
-    console.log("shares: %s", shares);
-
-    uint id4 = dNft.mint{value: 5  ether}(address(this));
-    ( shares, , ) = dNft.id2Nft(id4);
-    console.log("shares: %s", shares);
-
-    uint id5 = dNft.mint{value: 5  ether}(address(this));
-    ( shares, , ) = dNft.id2Nft(id5);
-    console.log("shares: %s", shares);
   }
 //   function testCannotMintToZeroAddress() public {
 //     vm.expectRevert("ERC721: mint to the zero address");

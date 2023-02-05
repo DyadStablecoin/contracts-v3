@@ -2,27 +2,24 @@
 pragma solidity =0.8.17;
 
 import {IPermissionManager} from "../interfaces/IPermissionManager.sol";
+import {PermissionMath} from "../libraries/PermissionMath.sol";
 
 contract PermissionManager is IPermissionManager {
+  using PermissionMath for Permission[];
+  using PermissionMath for uint8;
 
-  function _toUInt8(Permission[] memory _permissions) 
-    internal 
-    pure 
-    returns (uint8 _representation) {
-      for (uint256 i = 0; i < _permissions.length; ) {
-        _representation |= uint8(1 << uint8(_permissions[i]));
-        unchecked {
-          i++;
-        }
-      }
-  }
+  mapping(uint => uint)                              public id2LastOwnershipChange;
+  mapping(uint => mapping(address => NftPermission)) public id2NftPermission; 
 
-  function _hasPermission(uint8 _representation, Permission _permission) 
-    internal 
-    pure 
-    returns (bool hasPermission) {
-      uint256 _bitMask = 1 << uint8(_permission);
-      hasPermission = (_representation & _bitMask) != 0;
+  // Check if operator has permission for dNFT with id
+  function hasPermission(uint id, address operator, Permission permission) 
+    public 
+    view 
+    returns (bool) {
+      NftPermission memory _nftPermission = id2NftPermission[id][operator];
+      return _nftPermission.permissions._hasPermission(permission) &&
+        // If there was an ownership change after the permission was last updated,
+        // then the operator doesn't have the permission
+        id2LastOwnershipChange[id] < _nftPermission.lastUpdated;
   }
 }
-

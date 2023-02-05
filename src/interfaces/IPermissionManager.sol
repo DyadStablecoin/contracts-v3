@@ -2,7 +2,9 @@
 pragma solidity =0.8.17;
 
 interface IPermissionManager {
-  enum Permission { ACTIVATE, DEACTIVATE }
+  enum Permission { ACTIVATE, DEACTIVATE, REDEEM }
+
+  error MissingPermission();
 
   struct PermissionSet {
     address operator;         // The address of the operator
