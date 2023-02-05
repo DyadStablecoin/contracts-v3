@@ -6,9 +6,12 @@ interface IDNft {
   event Minted     (address indexed to, uint indexed id);
   event Redeemed   (uint indexed from, uint dyad, address indexed to, uint eth);
   event Moved      (uint indexed from, uint indexed to, uint amount);
+  event Liquidated (address indexed to, uint indexed id);
 
-  error MaxSupply    ();
-  error DepositTooLow();
+  error MaxSupply      ();
+  error DepositTooLow  ();
+  error NotLiquidatable();
+  error MissingShares  ();
 
   /**
    * @notice Mint a new dNFT

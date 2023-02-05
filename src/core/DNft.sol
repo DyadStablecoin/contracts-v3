@@ -111,6 +111,19 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return eth;
   }
 
+  // Liquidate DNft 
+  function liquidate(uint id, address to) 
+    external 
+    payable {
+      uint shares = id2Shares[id];
+      uint threshold = totalShares.mulWadDown(0.001e18);
+      if (shares > threshold) { revert NotLiquidatable(); }
+      uint newDeposit = _eth2dyad(msg.value);
+      uint newShares  = _addShares(id, newDeposit);
+      if (shares + newShares <= threshold) { revert MissingShares(); }
+      emit Liquidated(to, id); 
+  }
+
   function _addShares(uint id, uint _deposit)
     private
     returns (uint) {
