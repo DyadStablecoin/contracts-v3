@@ -135,7 +135,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       isOwnerOrHasPermission(from, Permission.REDEEM_DYAD)
     returns (uint) { 
       dyad.burn(msg.sender, _dyad);
-      uint eth = _dyad*1e8 / _getEthPrice();
+      uint eth = _dyad2eth(_dyad);
       to.safeTransferETH(eth); // re-entrancy vector
       emit Redeemed(from, _dyad, to, eth);
       return eth;
@@ -147,7 +147,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       isOwnerOrHasPermission(from, Permission.REDEEM_DEPOSIT)
     returns (uint) { 
       _subShares(from, _deposit);
-      uint eth = _deposit*1e8 / _getEthPrice();
+      uint eth = _dyad2eth(_deposit);
       to.safeTransferETH(eth); // re-entrancy vector
       emit Redeemed(from, _deposit, to, eth);
       return eth;
@@ -200,7 +200,14 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
     private 
     view 
     returns (uint) {
-      return eth * _getEthPrice() / 1e8; 
+      return eth * _getEthPrice()/1e8; 
+  }
+
+  function _dyad2eth(uint _dyad)
+    private 
+    view 
+    returns (uint) {
+      return _dyad*1e8 / _getEthPrice();
   }
 
   function _deposit2shares(uint _deposit) 
