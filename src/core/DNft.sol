@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import "forge-std/console.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
@@ -17,11 +18,14 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   uint public immutable MAX_SUPPLY;            // Max supply of DNfts
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
+  uint public ethPrice;
   uint public totalDeposit; // Sum of all deposits
   uint public totalShares;  // Sum of all shares
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
+
+  mapping(uint => Nft) public id2Nft;
 
   constructor(
       address _dyad,
@@ -34,6 +38,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       oracle                = IAggregatorV3(_oracle);
       MAX_SUPPLY            = _maxSupply;
       MIN_MINT_DYAD_DEPOSIT = _minMintDyadDeposit;
+      ethPrice              = _getEthPrice();
 
       for (uint i = 0; i < _insiders.length; i++) {
         _mintNft(_insiders[i]); // insiders do not require a DYAD deposit
@@ -48,7 +53,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       uint newDeposit = _eth2dyad(msg.value);
       if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
       uint id = _mintNft(to); 
-      // _addShares(newDeposit);
+      id2Nft[id].shares = _addShares(newDeposit);
       return id;
   }
 
@@ -71,12 +76,30 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       return eth * _getEthPrice() / 1e8; 
   }
 
+  function _addShares(uint deposit)
+    private
+    returns (uint) {
+      uint shares   = _deposit2shares(deposit);
+      totalDeposit += deposit;
+      totalShares  += shares;
+      return shares;
+  }
+
   function _deposit2shares(uint deposit) 
     private 
     view 
     returns (uint) {
-      // (totalShares / totalDeposit) * deposit
-      return totalShares.divWadDown(totalDeposit).mulWadUp(deposit);
+      if (totalShares == 0) { return deposit; }
+      // (deposit * totalShares) / totalDeposit
+      return deposit.mulWadDown(totalShares).divWadDown(totalDeposit);
+  }
+
+  function _shares2deposit(uint shares) 
+    private 
+    view 
+    returns (uint) {
+      // (shares * totalDeposit) / totalShares
+      return shares.mulWadDown(totalDeposit).divWadDown(totalShares);
   }
 
   // ETH price in USD
