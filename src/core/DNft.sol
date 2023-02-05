@@ -30,6 +30,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   IAggregatorV3 public oracle;
 
   mapping(uint => uint) public id2Shares;
+  mapping(uint => bool) public id2Locked;
 
   modifier isOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
@@ -40,6 +41,12 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       !hasPermission(id, msg.sender, permission)
     ) revert MissingPermission(); 
     _;
+  }
+  modifier isLocked(uint id) {
+    if (!id2Locked[id]) revert NotLocked(); _;
+  }
+  modifier isNotLocked(uint id) {
+    if (id2Locked[id]) revert Locked(); _;
   }
 
   constructor(
@@ -56,7 +63,8 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       ethPrice              = _getEthPrice();
 
       for (uint i = 0; i < _insiders.length; i++) {
-        _mintNft(_insiders[i]); // insiders do not require a DYAD deposit
+        uint id = _mintNft(_insiders[i]); // insiders do not require a DYAD deposit
+        id2Locked[id] = true;
       }
   }
 
@@ -122,6 +130,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   function withdraw(uint from, address to, uint _deposit)
     external 
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
+      isNotLocked(from)
     returns (uint) {
       _subShares(from, _deposit);
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
@@ -135,6 +144,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   function redeemDyad(uint from, address to, uint _dyad)
     external 
       isOwnerOrHasPermission(from, Permission.REDEEM_DYAD)
+      isNotLocked(from)
     returns (uint) { 
       dyad.burn(msg.sender, _dyad);
       uint eth = _dyad2eth(_dyad);
@@ -147,6 +157,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   function redeemDeposit(uint from, address to, uint _deposit)
     external 
       isOwnerOrHasPermission(from, Permission.REDEEM_DEPOSIT)
+      isNotLocked(from)
     returns (uint) { 
       _subShares(from, _deposit);
       uint eth = _dyad2eth(_deposit);
@@ -158,6 +169,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
   // Liquidate DNft 
   function liquidate(uint id, address to) 
     external 
+      isNotLocked(id)
     payable {
       uint shares    = id2Shares[id];
       uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHLD);
@@ -173,6 +185,14 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager {
       isOwner(id) 
     {
       _grant(id, permissionSets);
+  }
+
+  function unlock(uint id) 
+    external
+      isOwner(id)
+      isLocked(id)
+    {
+      id2Locked[id] = false;
   }
 
   function _addShares(uint id, uint _deposit)

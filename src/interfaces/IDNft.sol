@@ -18,6 +18,8 @@ interface IDNft {
   error MissingShares     ();
   error InsufficientShares();
   error CrTooLow          ();
+  error Locked            ();
+  error NotLocked         ();
 
   /**
    * @notice Mint a new dNFT
