@@ -72,7 +72,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     external 
     payable 
     returns (uint) {
-      if (++publicMints >= PUBLIC_MINTS) revert PublicMintsExceeded();
+      if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
       uint newDeposit = _eth2dyad(msg.value);
       if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
       uint id = _mintNft(to); 
@@ -86,7 +86,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     payable 
       onlyOwner
     returns (uint) {
-      if (++insiderMints >= INSIDER_MINTS) revert InsiderMintsExceeded();
+      if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
       uint id = _mintNft(to);
       id2Locked[id] = true;
       return id; 
