@@ -73,13 +73,13 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
-      uint id = _mintNft(to); 
+      uint id         = _mintNft(to); 
       uint newDeposit = _deposit(id);
-      if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
+      if (newDeposit < MIN_MINT_DYAD_DEPOSIT) revert DepositTooLow();
       return id;
   }
 
-  // Mint new insider DNft to `to` 
+  /// @inheritdoc IDNft
   function _mint(address to)
     external 
     payable 

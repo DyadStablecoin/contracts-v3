@@ -26,16 +26,34 @@ interface IDNft {
   /**
    * @notice Mint a new dNFT to `to`
    * @dev Will revert:
-   *      - If the public mints max has been reached
+   *      - If the maximum number of public mints has been reached
    *      - If `msg.value` is not enough to cover the deposit minimum
    *      - If `to` is the zero address
    * @dev Emits:
-   *      - Minted
-   *      - DyadMinted
+   *      - Minted(address indexed to, uint indexed id)
+   *      - AddedShares(uint indexed id, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `msg.value` is zero 
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
   function mint(address to) external payable returns (uint id);
+
+  /**
+   * @notice Mint new insider DNft to `to` 
+   * @dev Note:
+   *      - An insider dNFT does not require a deposit
+   *      - An insider dNFT is locked from the start and can only be unlocked 
+   *        by the dNFT owner
+   * @dev Will revert:
+   *      - If not called by contract owner
+   *      - If the maximum number of insider mints has been reached
+   *      - If `to` is the zero address
+   * @dev Emits:
+   *      - Minted(address indexed to, uint indexed id)
+   *      - AddedShares(uint indexed id, uint amount)
+   * @param to The address to mint the dNFT to
+   * @return id Id of the new dNFT
+   */
+  function _mint(address to) external payable returns (uint id);
 }
