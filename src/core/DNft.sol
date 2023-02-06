@@ -67,16 +67,15 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       ethPrice              = _getEthPrice();
   }
 
-  // Mint new DNft to `to` 
+  /// @inheritdoc IDNft
   function mint(address to)
     external 
     payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
-      uint newDeposit = _eth2dyad(msg.value);
-      if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
       uint id = _mintNft(to); 
-      _addShares(id, newDeposit);
+      uint newDeposit = _deposit(id);
+      if (newDeposit < MIN_MINT_DYAD_DEPOSIT) { revert DepositTooLow(); }
       return id;
   }
 
@@ -104,9 +103,15 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
 
   // Deposit ETH
   function deposit(uint id) 
-    external 
+    public 
       isOwnerOrHasPermission(id, Permission.DEPOSIT)
     payable
+    returns (uint) {
+      return _deposit(id);
+  }
+
+  function _deposit(uint id) 
+    private 
     returns (uint) {
       uint newDeposit = _eth2dyad(msg.value);
       _addShares(id, newDeposit);
@@ -137,18 +142,18 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       emit Rebased(supplyDelta);
   }
 
-  // Withdraw `_deposit` as an ERC-20 token from dNFT
-  function withdraw(uint from, address to, uint _deposit)
+  // Withdraw `amount` as an ERC-20 token from dNFT
+  function withdraw(uint from, address to, uint amount)
     external 
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
-      _subShares(from, _deposit); // fails if `from` doesn't have enough shares
+      _subShares(from, amount); // fails if `from` doesn't have enough shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
-      uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + _deposit);
+      uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
-      dyad.mint(to, _deposit);
-      emit Withdrawn(from, to, _deposit);
+      dyad.mint(to, amount);
+      emit Withdrawn(from, to, amount);
       return newCollatRatio;
   }
 
@@ -164,15 +169,15 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   }
 
   // Redeem deposit for ETH
-  function redeemDeposit(uint from, address to, uint _deposit)
+  function redeemDeposit(uint from, address to, uint amount)
     external 
       isOwnerOrHasPermission(from, Permission.REDEEM_DEPOSIT)
       isNotLocked(from)
     returns (uint) { 
-      _subShares(from, _deposit); // fails if `from` doesn't have enough shares
-      uint eth = _dyad2eth(_deposit);
+      _subShares(from, amount); // fails if `from` doesn't have enough shares
+      uint eth = _dyad2eth(amount);
       to.safeTransferETH(eth); // re-entrancy vector
-      emit RedeemedDeposit(from, _deposit, to, eth);
+      emit RedeemedDeposit(from, amount, to, eth);
       return eth;
   }
 
@@ -206,23 +211,23 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       id2Locked[id] = false;
   }
 
-  function _addShares(uint id, uint _deposit)
+  function _addShares(uint id, uint amount)
     private
     returns (uint) {
-      uint shares    = _deposit2shares(_deposit);
+      uint shares    = _deposit2shares(amount);
       id2Shares[id] += shares;
-      totalDeposit  += _deposit;
+      totalDeposit  += amount;
       totalShares   += shares;
       emit AddedShares(id, shares);
       return shares;
   }
 
-  function _subShares(uint id, uint _deposit)
+  function _subShares(uint id, uint amount)
     private
     returns (uint) {
-      uint shares    = _deposit2shares(_deposit);
+      uint shares    = _deposit2shares(amount);
       id2Shares[id] -= shares;
-      totalDeposit  -= _deposit;
+      totalDeposit  -= amount;
       totalShares   -= shares;
       emit RemovedShares(id, shares);
       return shares;
@@ -243,12 +248,12 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return _dyad*1e8 / _getEthPrice();
   }
 
-  function _deposit2shares(uint _deposit) 
+  function _deposit2shares(uint amount) 
     private 
     view 
     returns (uint) {
-      if (totalShares == 0) { return _deposit; }
-      return _deposit.mulWadDown(totalShares).divWadDown(totalDeposit);
+      if (totalShares == 0) { return amount; }
+      return amount.mulWadDown(totalShares).divWadDown(totalDeposit);
   }
 
   // ETH price in USD
