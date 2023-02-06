@@ -159,7 +159,7 @@ contract DNftsTest is BaseTest {
     dNft.withdraw(id, address(1), 5000e18);
   }
 
-  // -------------------- redeem --------------------
+  // -------------------- redeemDyad --------------------
   function test_RedeemDyad() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
     dNft.withdraw(id, address(this), 1000e18);
@@ -170,4 +170,14 @@ contract DNftsTest is BaseTest {
     assertEq(dyad.balanceOf(address(this)), 0);
     assertEq(address(1).balance, 1e18);
   }
+  function testCannot_RedeemDyadExceedsBalance() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    dNft.withdraw(id, address(this), 1000e18);
+    assertEq(dyad.balanceOf(address(this)), 1000e18);
+
+    vm.expectRevert();
+    dNft.redeemDyad(address(this), 2000e18);
+  }
+
+  // -------------------- redeemDeposit --------------------
 }
