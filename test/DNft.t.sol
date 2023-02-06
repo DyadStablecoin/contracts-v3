@@ -133,9 +133,24 @@ contract DNftsTest is BaseTest {
   function test_Withdraw() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
     assertEq(dNft.id2Shares(id), 5000e18);
+    assertEq(dyad.totalSupply(), 0);
 
     dNft.withdraw(id, address(1), 1000e18);
+
     assertEq(dNft.id2Shares(id), 4000e18);
     assertEq(dyad.balanceOf(address(1)), 1000e18);
+    assertEq(dyad.totalSupply(), 1000e18);
+  }
+  function testCannot_WithdrawIsLocked() public {
+    vm.prank(MAINNET_OWNER);
+    uint id = dNft._mint(address(this));
+
+    vm.expectRevert(abi.encodeWithSelector(IDNft.Locked.selector));
+    dNft.withdraw(id, address(1), 1000e18);
+  }
+  function testCannot_WithdrawIsNotOwner() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    vm.expectRevert(abi.encodeWithSelector(IPermissionManager.MissingPermission.selector));
+    dNft.withdraw(id, address(1), 1000e18);
   }
 }
