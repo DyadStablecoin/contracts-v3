@@ -257,4 +257,14 @@ contract DNftsTest is BaseTest {
     assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
   }
+  function testCannot_GrantIsNotOwner() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    IP.Permission[] memory pp = new IP.Permission[](1);
+    pp[0] = IP.Permission.DEPOSIT;
+    IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
+    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+
+    vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
+    dNft.grant(id, ps);
+  }
 }
