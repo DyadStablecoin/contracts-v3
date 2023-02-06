@@ -187,6 +187,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       uint newDeposit = _eth2dyad(msg.value);
       uint newShares  = _addShares(id, newDeposit);
       if (shares + newShares <= threshold) { revert MissingShares(); }
+      _transfer(ownerOf(id), to, id);
       emit Liquidated(to, id); 
   }
 

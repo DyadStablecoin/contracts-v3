@@ -209,4 +209,31 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IPermissionManager.MissingPermission.selector));
     dNft.redeemDeposit(id, address(this), 1000e18);
   }
+
+  // -------------------- liquidate --------------------
+  function test_Liquidate() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    uint id2 = dNft.mint{value: 5 ether}(address(this));
+
+    dNft.deposit{value: 100000 ether}(id1);
+
+    dNft.liquidate{value: 500000 ether}(id2, address(1));
+
+    assertEq(dNft.ownerOf(id2), address(1));
+  }
+  function testCannot_LiquidateUnderLiquidationThershold() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotLiquidatable.selector));
+    dNft.liquidate{value: 500000 ether}(id, address(1));
+  }
+  function testCannot_LiquidateMissingShares() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    uint id2 = dNft.mint{value: 5 ether}(address(this));
+
+    dNft.deposit{value: 100000 ether}(id1);
+
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingShares.selector));
+    dNft.liquidate(id2, address(1));
+  }
 }
