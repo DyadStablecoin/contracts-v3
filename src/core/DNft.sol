@@ -153,13 +153,13 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   }
 
   // Redeem DYAD ERC20 for ETH
-  function redeemDyad(uint from, address to, uint _dyad)
+  function redeemDyad(address to, uint _dyad)
     external 
     returns (uint) { 
       dyad.burn(msg.sender, _dyad); // reverts if `from` doesn't have enough DYAD
       uint eth = _dyad2eth(_dyad);
       to.safeTransferETH(eth);      // re-entrancy vector
-      emit Redeemed(from, _dyad, to, eth);
+      emit RedeemedDyad(msg.sender, _dyad, to, eth);
       return eth;
   }
 
@@ -172,7 +172,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       _subShares(from, _deposit); // fails if `from` doesn't have enough shares
       uint eth = _dyad2eth(_deposit);
       to.safeTransferETH(eth); // re-entrancy vector
-      emit Redeemed(from, _deposit, to, eth);
+      emit RedeemedDeposit(from, _deposit, to, eth);
       return eth;
   }
 

@@ -5,7 +5,8 @@ interface IDNft {
   event AddedShares  (uint indexed id, uint amount);
   event RemovedShares(uint indexed id, uint amount);
   event Minted     (address indexed to, uint indexed id);
-  event Redeemed   (uint indexed from, uint dyad, address indexed to, uint eth);
+  event RedeemedDyad   (address indexed from, uint dyad, address indexed to, uint eth);
+  event RedeemedDeposit(uint indexed from, uint dyad, address indexed to, uint eth);
   event Moved      (uint indexed from, uint indexed to, uint amount);
   event Liquidated (address indexed to, uint indexed id);
   event Withdrawn  (uint indexed from, address indexed to, uint amount);

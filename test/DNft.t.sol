@@ -153,4 +153,21 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IPermissionManager.MissingPermission.selector));
     dNft.withdraw(id, address(1), 1000e18);
   }
+  function testCannot_WithdrawCrTooLow() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.CrTooLow.selector));
+    dNft.withdraw(id, address(1), 5000e18);
+  }
+
+  // -------------------- redeem --------------------
+  function test_RedeemDyad() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    dNft.withdraw(id, address(this), 1000e18);
+    assertEq(dyad.balanceOf(address(this)), 1000e18);
+
+    dNft.redeemDyad(address(1), 1000e18);
+
+    assertEq(dyad.balanceOf(address(this)), 0);
+    assertEq(address(1).balance, 1e18);
+  }
 }
