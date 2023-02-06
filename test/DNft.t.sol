@@ -180,4 +180,33 @@ contract DNftsTest is BaseTest {
   }
 
   // -------------------- redeemDeposit --------------------
+  function test_RedeemDeposit() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    assertEq(dNft.id2Shares(id), 5000e18);
+    assertEq(address(1).balance, 0 ether);
+
+    vm.prank(address(1));
+    dNft.redeemDeposit(id, address(1), 1000e18);
+
+    assertEq(dNft.id2Shares(id), 4000e18);
+    assertEq(address(1).balance, 1 ether);
+  }
+  function testCannot_RedeemDepositIsLocked() public {
+    vm.prank(MAINNET_OWNER);
+    uint id = dNft._mint(address(this));
+
+    vm.expectRevert(abi.encodeWithSelector(IDNft.Locked.selector));
+    dNft.redeemDeposit(id, address(this), 1000e18);
+  }
+  function testCannot_RedeemExceedsDeposit() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+
+    vm.expectRevert();
+    dNft.redeemDeposit(id, address(this), 6000e18);
+  }
+  function testCannot_RedeemDepositIsNotOwner() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    vm.expectRevert(abi.encodeWithSelector(IPermissionManager.MissingPermission.selector));
+    dNft.redeemDeposit(id, address(this), 1000e18);
+  }
 }
