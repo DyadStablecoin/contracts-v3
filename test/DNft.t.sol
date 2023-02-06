@@ -250,6 +250,7 @@ contract DNftsTest is BaseTest {
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
 
+    vm.roll(block.number + 1);
     dNft.grant(id, ps);
 
     assertTrue(dNft.hasPermission(id, address(1), IP.Permission.DEPOSIT));

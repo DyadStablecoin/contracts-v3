@@ -269,12 +269,6 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   ) internal 
     override {
       super._beforeTokenTransfer(from, to, id, batchSize);
-      // not needed for a mint
-      // that way we can mint and grant a permission in the same block
-      if (from != address(0)) { 
-        // needed for the permission system,
-        // so all permissions are reset when ownership changes
-        id2LastOwnershipChange[id] = block.number;
-      }
+      id2LastOwnershipChange[id] = block.number; // resets permissions on transfer
   }
 }
