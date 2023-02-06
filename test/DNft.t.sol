@@ -117,7 +117,7 @@ contract DNftsTest is BaseTest {
   }
 
   // -------------------- rebase --------------------
-  function testRebase() public {
+  function test_Rebase() public {
     dNft.mint{value: 6 ether}(address(this));
     uint id2 = dNft.mint{value: 6 ether}(address(this));
 
@@ -127,5 +127,15 @@ contract DNftsTest is BaseTest {
     dNft.withdraw(id2, address(1), 1000e18);
 
     // uint id3 = dNft.mint{value: 6 ether}(address(this));
+  }
+
+  // -------------------- withdraw --------------------
+  function test_Withdraw() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    assertEq(dNft.id2Shares(id), 5000e18);
+
+    dNft.withdraw(id, address(1), 1000e18);
+    assertEq(dNft.id2Shares(id), 4000e18);
+    assertEq(dyad.balanceOf(address(1)), 1000e18);
   }
 }

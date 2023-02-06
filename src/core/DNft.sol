@@ -147,6 +147,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + _deposit);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      dyad.mint(to, _deposit);
       emit Withdrawn(from, to, _deposit);
       return newCollatRatio;
   }
