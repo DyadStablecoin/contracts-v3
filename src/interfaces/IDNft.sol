@@ -56,6 +56,10 @@ interface IDNft is IPermissionManager {
    * @dev Emits:
    *      - Minted(address indexed to, uint indexed id)
    *      - AddedShares(uint indexed id, uint amount)
+   * @dev For Auditors:
+   *      - I'm aware that I'm misuing the underscore convention to denote a 
+   *        private/internal function. I'm doing it to show that this should 
+   *        not be called by anyone except for the contract owner.
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
@@ -66,7 +70,6 @@ interface IDNft is IPermissionManager {
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT AND does not have the
    *        `DEPOSIT` permission
-   *      - dNFT is inactive
    * @dev Emits:
    *      - AddedShares(uint indexed id, uint amount)
    * @dev For Auditors:
@@ -91,14 +94,13 @@ interface IDNft is IPermissionManager {
    * @param from Id of the dNFT to move the deposit from
    * @param to Id of the dNFT to move the deposit to
    * @param shares Amount of deposited DYAD shares to move
-   * @param shares Amount of DYAD to move
    */
   function move(uint from, uint to, uint shares) external;
 
   /**
    * @notice Rebase DYAD total supply to reflect the latest price changes
    * @dev Will revert:
-   *      - If the new ETH price has not changed
+   *      - If the new ETH price has not changed from the last rebase ETH price
    * @dev Emits:
    *      - Rebased(uint supplyDelta)
    * @dev For Auditors:

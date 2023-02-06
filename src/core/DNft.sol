@@ -23,18 +23,18 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   uint public constant  LIQUIDATION_THRESHLD      = 0.001e18; // 0.1%
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
-  uint public ethPrice;
+  uint public ethPrice;     // ETH price from the last `rebase`
   uint public totalDeposit; // Sum of all deposits
   uint public totalShares;  // Sum of all shares
 
-  uint public insiderMints;
-  uint public publicMints;
-
-  Dyad          public dyad;
-  IAggregatorV3 public oracle;
+  uint public insiderMints; // Number of insider mints
+  uint public publicMints;  // Number of public mints
 
   mapping(uint => uint) public id2Shares;
   mapping(uint => bool) public id2Locked;
+
+  Dyad          public dyad;
+  IAggregatorV3 public oracle;
 
   modifier isOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
