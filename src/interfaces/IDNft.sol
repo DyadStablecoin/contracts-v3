@@ -56,4 +56,19 @@ interface IDNft {
    * @return id Id of the new dNFT
    */
   function _mint(address to) external payable returns (uint id);
+
+  /**
+   * @notice Deposit ETH for deposited DYAD
+   * @dev Will revert:
+   *      - If `msg.sender` is not the owner of the dNFT AND does not have the
+   *        `DEPOSIT` permission
+   *      - dNFT is inactive
+   * @dev Emits:
+   *      - AddedShares(uint indexed id, uint amount)
+   * @dev For Auditors:
+   *      - To save gas it does not check if `msg.value` is zero 
+   * @param id Id of the dNFT that gets the deposited DYAD
+   * @return amount Amount of DYAD deposited
+   */
+  function deposit(uint id) external payable returns (uint);
 }

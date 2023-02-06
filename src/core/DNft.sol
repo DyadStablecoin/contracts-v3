@@ -101,7 +101,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return id;
   }
 
-  // Deposit ETH
+  /// @inheritdoc IDNft
   function deposit(uint id) 
     public 
       isOwnerOrHasPermission(id, Permission.DEPOSIT)
