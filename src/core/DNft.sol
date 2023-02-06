@@ -220,10 +220,10 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   function _addShares(uint id, uint amount)
     private
     returns (uint) {
-      uint shares    = _deposit2shares(amount);
+      uint shares    = _convert2Shares(amount);
       id2Shares[id] += shares;
-      totalDeposit  += amount;
       totalShares   += shares;
+      totalDeposit  += amount;
       emit AddedShares(id, shares);
       return shares;
   }
@@ -231,10 +231,10 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   function _subShares(uint id, uint amount)
     private
     returns (uint) {
-      uint shares    = _deposit2shares(amount);
+      uint shares    = _convert2Shares(amount);
       id2Shares[id] -= shares;
-      totalDeposit  -= amount;
       totalShares   -= shares;
+      totalDeposit  -= amount;
       emit RemovedShares(id, shares);
       return shares;
   }
@@ -254,12 +254,12 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return _dyad*1e8 / _getEthPrice();
   }
 
-  function _deposit2shares(uint amount) 
+  function _convert2Shares(uint amount) 
     private 
     view 
     returns (uint) {
       if (totalShares == 0) { return amount; }
-      return amount.mulWadDown(totalShares).divWadDown(totalDeposit);
+      return amount.mulDivDown(totalShares, totalDeposit);
   }
 
   // ETH price in USD

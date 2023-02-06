@@ -129,15 +129,20 @@ contract DNftsTest is BaseTest {
 
   // -------------------- withdraw --------------------
   function test_Withdraw() public {
-    uint id = dNft.mint{value: 5 ether}(address(this));
-    assertEq(dNft.id2Shares(id), 5000e18);
+    uint id = dNft.mint{value: 50 ether}(address(this));
+    assertEq(dNft.id2Shares(id), 50000e18);
     assertEq(dyad.totalSupply(), 0);
 
     dNft.withdraw(id, address(1), 1000e18);
 
-    assertEq(dNft.id2Shares(id), 4000e18);
+    assertEq(dNft.id2Shares(id), 49000e18);
     assertEq(dyad.balanceOf(address(1)), 1000e18);
     assertEq(dyad.totalSupply(), 1000e18);
+
+    dNft.withdraw(id, address(1), 1000e18);
+    assertEq(dNft.id2Shares(id), 48000e18);
+    assertEq(dyad.balanceOf(address(1)), 2000e18);
+    assertEq(dyad.totalSupply(), 2000e18);
   }
   function testCannot_WithdrawIsLocked() public {
     vm.prank(MAINNET_OWNER);
