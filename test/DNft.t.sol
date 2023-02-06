@@ -74,15 +74,47 @@ contract DNftsTest is BaseTest {
 
     assertEq(dNft.totalSupply(), dNft.INSIDER_MINTS());
   }
-  // function testCannotMintExceedsMaxSupply() public {
-  //   uint nftsLeft = dNft.MAX_SUPPLY() - dNft.totalSupply();
-  //   for (uint i = 0; i < nftsLeft; i++) {
-  //     dNft.mint{value: 5 ether}(address(this));
-  //   }
-  //   // assertEq(dNft.totalSupply(), dNft.MAX_SUPPLY());
-  //   vm.expectRevert(abi.encodeWithSelector(IDNft.PublicMintsExceeded.selector));
-  //   dNft.mint{value: 5 ether}(address(this));
-  // }
+  // -------------------- deposit --------------------
+  function test_Deposit() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    assertEq(dNft.id2Shares(id), 5000e18);
+
+    dNft.deposit{value: 5 ether}(id);
+    assertEq(dNft.id2Shares(id), 10000e18);
+  }
+  function testCannot_DepositIsNotOwner() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    vm.expectRevert(abi.encodeWithSelector(IPermissionManager.MissingPermission.selector));
+    dNft.deposit{value: 5 ether}(id);
+  }
+
+  // -------------------- move --------------------
+  function test_Move() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    uint id2 = dNft.mint{value: 5 ether}(address(this));
+
+    assertEq(dNft.id2Shares(id1), 5000e18);
+    assertEq(dNft.id2Shares(id2), 5000e18);
+
+    dNft.move(id1, id2, 1000e18);
+
+    assertEq(dNft.id2Shares(id1), 4000e18);
+    assertEq(dNft.id2Shares(id2), 6000e18);
+  }
+  function testCannot_MoveIsNotOwner() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(1));
+    uint id2 = dNft.mint{value: 5 ether}(address(this));
+
+    vm.expectRevert(abi.encodeWithSelector(IPermissionManager.MissingPermission.selector));
+    dNft.move(id1, id2, 1000e18);
+  }
+  function testCannot_MoveExceedsBalance() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    uint id2 = dNft.mint{value: 5 ether}(address(this));
+
+    vm.expectRevert();
+    dNft.move(id1, id2, 6000e18);
+  }
 
   // -------------------- rebase --------------------
   function testRebase() public {
