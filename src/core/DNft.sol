@@ -81,7 +81,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   }
 
   // Mint new insider DNft to `to` 
-  function mint2Insider(address to)
+  function _mint(address to)
     external 
     payable 
       onlyOwner
@@ -154,8 +154,6 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   // Redeem DYAD ERC20 for ETH
   function redeemDyad(uint from, address to, uint _dyad)
     external 
-      isOwnerOrHasPermission(from, Permission.REDEEM_DYAD)
-      isNotLocked(from)
     returns (uint) { 
       dyad.burn(msg.sender, _dyad); // reverts if `from` doesn't have enough DYAD
       uint eth = _dyad2eth(_dyad);

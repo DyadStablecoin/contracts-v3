@@ -8,28 +8,22 @@ import {IDNft} from "../src/interfaces/IDNft.sol";
 import {IPermissionManager} from "../src/interfaces/IPermissionManager.sol";
 
 contract DNftsTest is BaseTest {
-  function testInsidersAllocation() public {
-    // assertEq(dNft.totalSupply(), GOERLI_INSIDERS.length);
-
-    // assertEq(dNft.balanceOf(GOERLI_INSIDERS[0]), 1);
-    // assertEq(dNft.balanceOf(GOERLI_INSIDERS[1]), 1);
-    // assertEq(dNft.balanceOf(GOERLI_INSIDERS[2]), 1);
-
-    // assertEq(dNft.ownerOf(0), GOERLI_INSIDERS[0]);
-    // assertEq(dNft.ownerOf(1), GOERLI_INSIDERS[1]);
-    // assertEq(dNft.ownerOf(2), GOERLI_INSIDERS[2]);
-
-    // assertTrue(dNft.ethPrice() > 0); // ethPrice is set by oracle
+  function testConstructor() public {
+    assertEq(dNft.owner(), MAINNET_OWNER);
+    assertTrue(dNft.ethPrice() > 0);
   }
 
   // -------------------- mint --------------------
-  // function testMintNft() public {
-  //   uint id1 = dNft.mint{value: 5 ether}(address(this));
-  //   assertEq(dNft.id2Shares(id1), 5000e18);
+  function testMintNft() public {
+    assertEq(dNft.publicMints(), 0);
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    assertEq(dNft.publicMints(), 1);
+    assertEq(dNft.id2Shares(id1), 5000e18);
 
-  //   uint id2 = dNft.mint{value: 6 ether}(address(this));
-  //   assertEq(dNft.id2Shares(id2), 6000e18);
-  // }
+    uint id2 = dNft.mint{value: 6 ether}(address(this));
+    assertEq(dNft.publicMints(), 2);
+    assertEq(dNft.id2Shares(id2), 6000e18);
+  }
   function testCannotMintToZeroAddress() public {
     vm.expectRevert("ERC721: mint to the zero address");
     dNft.mint{value: 5 ether}(address(0));
@@ -38,10 +32,13 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IDNft.DepositTooLow.selector));
     dNft.mint{value: 1 ether}(address(this));
   }
+
+  // -------------------- _mint --------------------
   function testMint2Insider() public {
     vm.prank(MAINNET_OWNER);
-    uint id = dNft.mint2Insider(address(1));
+    uint id = dNft._mint(address(1));
     assertTrue(dNft.id2Locked(id));
+    assertEq(dNft.id2Shares(id), 0);
   }
   // function testCannotMintExceedsMaxSupply() public {
   //   uint nftsLeft = dNft.MAX_SUPPLY() - dNft.totalSupply();
