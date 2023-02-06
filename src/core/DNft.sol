@@ -199,6 +199,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       emit Liquidated(to, id); 
   }
 
+  /// @inheritdoc IDNft
   function grant(uint id, PermissionSet[] calldata permissionSets) 
     external 
       isOwner(id) 
@@ -206,12 +207,14 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       _grant(id, permissionSets);
   }
 
+  /// @inheritdoc IDNft
   function unlock(uint id) 
     external
       isOwner(id)
       isLocked(id)
     {
       id2Locked[id] = false;
+      emit Unlocked(id);
   }
 
   function _addShares(uint id, uint amount)

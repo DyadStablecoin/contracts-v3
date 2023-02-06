@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity = 0.8.17;
 
-interface IDNft {
+import {IPermissionManager} from "./IPermissionManager.sol";
+
+interface IDNft is IPermissionManager {
+  event Unlocked       (uint indexed id);
   event AddedShares    (uint indexed id, uint amount);
   event RemovedShares  (uint indexed id, uint amount);
   event Minted         (address indexed to, uint indexed id);
@@ -183,4 +186,28 @@ interface IDNft {
    * @param to Address to send the dNFT to
    */
   function liquidate(uint id, address to) external payable;
+
+  /**
+   * @notice Grant and/or revoke permissions
+   * @dev Will revert:
+   *      - If `msg.sender` is not the owner of the dNFT  
+   * @dev Emits:
+   *      - Modified(uint indexed id, PermissionSet[] permissions)
+   * @dev To remove all permissions for a specific operator pass in an empty
+   *      Permission array for that PermissionSet
+   * @param id Id of the dNFT's permissions to modify
+   * @param permissionSets Permissions to grant and revoke fro specific operators
+   */
+  function grant(uint id, PermissionSet[] calldata permissionSets) external;
+
+  /**
+   * @notice Unlock insider dNFT
+   * @dev Will revert:
+   *      - If `msg.sender` is not the owner of the dNFT 
+   *      - dNFT is not locked
+   * @dev Emits:
+   *      - Unlocked(uint indexed id)
+   * @param id Id of the dNFT to unlock
+   */
+  function unlock(uint id) external;
 }
