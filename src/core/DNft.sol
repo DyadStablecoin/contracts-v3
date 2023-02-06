@@ -36,7 +36,6 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
 
   mapping(uint => uint) public id2Shares;
   mapping(uint => bool) public id2Locked;
-  mapping(uint => uint) public id2LastDeposit; // id => (blockNumber)
 
   modifier isOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
@@ -108,7 +107,6 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(id, Permission.DEPOSIT)
     payable
     returns (uint) {
-      id2LastDeposit[id] = block.number;
       return _deposit(id);
   }
 
@@ -153,7 +151,6 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
-      if (id2LastDeposit[from] == block.number) { revert DepositedInSameBlock(); } 
       _subShares(from, amount); // fails if `from` doesn't have enough shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
@@ -163,21 +160,21 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return newCollatRatio;
   }
 
-  // Redeem DYAD ERC20 for ETH
-  function redeemDyad(address to, uint _dyad)
+  /// @inheritdoc IDNft
+  function redeemDyad(address to, uint amount)
     external 
     returns (uint) { 
-      dyad.burn(msg.sender, _dyad); // reverts if `from` doesn't have enough DYAD
-      uint eth = _dyad2eth(_dyad);
+      dyad.burn(msg.sender, amount); // reverts if `from` doesn't have enough DYAD
+      uint eth = _dyad2eth(amount);
       to.safeTransferETH(eth);      // re-entrancy vector
-      emit RedeemedDyad(msg.sender, _dyad, to, eth);
+      emit RedeemedDyad(msg.sender, amount, to, eth);
       return eth;
   }
 
-  // Redeem deposit for ETH
+  /// @inheritdoc IDNft
   function redeemDeposit(uint from, address to, uint amount)
     external 
-      isOwnerOrHasPermission(from, Permission.REDEEM_DEPOSIT)
+      isOwnerOrHasPermission(from, Permission.REDEEM)
       isNotLocked(from)
     returns (uint) { 
       _subShares(from, amount); // fails if `from` doesn't have enough shares
@@ -187,7 +184,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return eth;
   }
 
-  // Liquidate DNft 
+  /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
       isNotLocked(id)

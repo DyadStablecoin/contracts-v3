@@ -109,8 +109,6 @@ interface IDNft {
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT AND does not have the
    *        `WITHDRAW` permission
-   *      - If DYAD was deposited into the dNFT in the same block. Needed to
-   *        prevent flash-loan attacks
    *      - If `amount` to withdraw is larger than the dNFT deposit
    *      - If Collateralization Ratio is is less than the min collaterization 
    *        ratio after the withdrawal
@@ -118,12 +116,71 @@ interface IDNft {
    *      - Withdrawn(uint indexed from, address indexed to, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `amount` is 0 
-   *      - To prevent flash-loan attacks, `deposit` and 
-   *        `withdraw` can not be called for the same dNFT in the same block
    * @param from Id of the dNFT to withdraw from
    * @param to Address to send the DYAD to
    * @param amount Amount of DYAD to withdraw
    * @return collatRatio New Collateralization Ratio after the withdrawal
    */
   function withdraw(uint from, address to, uint amount) external returns (uint);
+
+  /**
+   * @notice Redeem DYAD ERC20 for ETH
+   * @dev Will revert:
+   *      - If DYAD to redeem is larger thatn `msg.sender` DYAD balance
+   *      - If the ETH transfer fails
+   * @dev Emits:
+   *      - RedeemedDyad(uint indexed from, address indexed to, uint amount)
+   * @dev For Auditors:
+   *      - To save gas it does not check if `amount` is 0 
+   *      - `dyad.burn` is called in the beginning so we can revert as fast as
+   *        possible if `msg.sender` does not have enough DYAD. The dyad contract
+   *        is trusted so it introduces no re-entrancy risk.
+   *      - There is a re-entrancy risk while transfering the ETH, that is why the 
+   *        `all state changes are done before the ETH transfer. I do not see why
+   *        a `nonReentrant` modifier would be needed here, lets save the gas.
+   * @param to Address to send the ETH to
+   * @param amount Amount of DYAD to redeem
+   * @return eth Amount of ETH redeemed for DYAD
+   */
+  function redeemDyad(address to, uint amount) external returns (uint);
+
+  /**
+   * @notice Redeem `amount` of deposited DYAD for ETH
+   * @dev Will revert:
+   *      - If `msg.sender` is not the owner of the dNFT AND does not have the
+   *        `REDEEM` permission
+   *      - If dNFT is locked
+   *      - If deposited DYAD to redeem is larger than the dNFT deposit
+   *      - If the ETH transfer fails
+   * @dev Emits:
+   *      - RedeemedDeposit(uint indexed from, address indexed to, uint amount)
+   * @dev For Auditors:
+   *      - To save gas it does not check if `amount` is 0 
+   *      - There is a re-entrancy risk while transfering the ETH, that is why the 
+   *        `all state changes are done before the ETH transfer. I do not see why
+   *        a `nonReentrant` modifier would be needed here, lets save the gas.
+   * @param from Id of the dNFT to redeem from
+   * @param to Address to send the ETH to
+   * @param amount Amount of DYAD to redeem
+   * @return eth Amount of ETH redeemed for DYAD
+   */
+  function redeemDeposit(uint from, address to, uint amount) external returns (uint);
+
+  /**
+   * @notice Liquidate dNFT by covering its missing shares and transfering it 
+   *         to a new owner
+   * @dev Will revert:
+   *      - If dNFT shares are not under the `LIQUIDATION_THRESHLD`
+   *      - If ETH sent is not enough to cover the missing shares
+   * @dev Emits:
+   *      - Liquidated(address indexed to, uint indexed id)
+   * @dev For Auditors:
+   *      - No need to check if the dNFT exists because a dNFT `transfer` will
+   *        revert if it does not exist.
+   *      - All permissions for this dNFT are reset because `_transfer` calls 
+   *        `_beforeTokenTransfer`, where we set `lastOwnershipChange`
+   * @param id Id of the dNFT to liquidate
+   * @param to Address to send the dNFT to
+   */
+  function liquidate(uint id, address to) external payable;
 }
