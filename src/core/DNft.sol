@@ -36,6 +36,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
 
   mapping(uint => uint) public id2Shares;
   mapping(uint => bool) public id2Locked;
+  mapping(uint => uint) public id2LastDeposit; // id => (blockNumber)
 
   modifier isOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
@@ -107,6 +108,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(id, Permission.DEPOSIT)
     payable
     returns (uint) {
+      id2LastDeposit[id] = block.number;
       return _deposit(id);
   }
 
@@ -118,7 +120,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return newDeposit;
   }
 
-  // Move `shares` `from` one dNFT `to` another dNFT
+  /// @inheritdoc IDNft
   function move(uint from, uint to, uint shares) 
     external 
       isOwnerOrHasPermission(from, Permission.MOVE) 
@@ -128,8 +130,10 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       emit Moved(from, to, shares);
   }
 
-  // Rebase DYAD total supply to reflect the latest price changes
-  function rebase() external {
+  /// @inheritdoc IDNft
+  function rebase() 
+    external 
+    returns (uint) {
       uint newEthPrice = _getEthPrice();
       if (newEthPrice == ethPrice) revert SamePrice();
       bool rebaseUp    = newEthPrice > ethPrice;
@@ -140,14 +144,16 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
                : totalDeposit -= supplyDelta;
       ethPrice = newEthPrice; 
       emit Rebased(supplyDelta);
+      return supplyDelta;
   }
 
-  // Withdraw `amount` as an ERC-20 token from dNFT
+  /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount)
     external 
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
+      if (id2LastDeposit[from] == block.number) { revert DepositedInSameBlock(); } 
       _subShares(from, amount); // fails if `from` doesn't have enough shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
