@@ -6,6 +6,7 @@ import {BaseTest} from "./BaseTest.sol";
 import {Parameters} from "../src/Parameters.sol";
 import {IDNft} from "../src/interfaces/IDNft.sol";
 import {IPermissionManager as IP} from "../src/interfaces/IPermissionManager.sol";
+import {SharesMath} from "../src/libraries/SharesMath.sol";
 
 contract DNftsTest is BaseTest {
   function test_Constructor() public {
@@ -137,16 +138,45 @@ contract DNftsTest is BaseTest {
   }
 
   // -------------------- rebase --------------------
-  function test_Rebase() public {
-    dNft.mint{value: 5 ether}(address(this));
-    uint oldDeposit = dNft.totalDeposit();
-    assertEq(oldDeposit, 5000e18);
+  function test_RebaseUp() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    uint oldTotalDeposit = dNft.totalDeposit();
+    assertEq(oldTotalDeposit, 5000e18);
+    uint oldDeposit = SharesMath.shares2Deposit(
+      dNft.id2Shares(id),
+      dNft.totalDeposit(),
+      dNft.totalShares()
+    );
 
     oracleMock.setPrice(1100e8); // 10% increase
     dNft.rebase();
 
-    uint newDeposit = dNft.totalDeposit();
-    assertEq(newDeposit, 5000e18 + 500e18);
+    uint newTotalDeposit = dNft.totalDeposit();
+    assertEq(newTotalDeposit, 5000e18 + 500e18);
+    uint newDeposit = SharesMath.shares2Deposit(
+      dNft.id2Shares(id),
+      dNft.totalDeposit(),
+      dNft.totalShares()
+    );
+    assertTrue(newDeposit > oldDeposit);
+  }
+  function test_RebaseDown() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    uint oldDeposit = SharesMath.shares2Deposit(
+      dNft.id2Shares(id),
+      dNft.totalDeposit(),
+      dNft.totalShares()
+    );
+
+    oracleMock.setPrice(900e8); // 10% increase
+    dNft.rebase();
+
+    uint newDeposit = SharesMath.shares2Deposit(
+      dNft.id2Shares(id),
+      dNft.totalDeposit(),
+      dNft.totalShares()
+    );
+    assertTrue(newDeposit < oldDeposit);
   }
 
   // -------------------- withdraw --------------------
