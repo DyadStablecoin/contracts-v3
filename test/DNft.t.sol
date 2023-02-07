@@ -217,6 +217,11 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IDNft.CrTooLow.selector));
     dNft.withdraw(id, address(1), 5000e18);
   }
+  function testCannot_WithdrawExceedsDeposit() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    vm.expectRevert();
+    dNft.withdraw(id, address(1), 6000e18);
+  }
 
   // -------------------- redeemDyad --------------------
   function test_RedeemDyad() public {
