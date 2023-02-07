@@ -24,6 +24,13 @@ contract DNftsTest is BaseTest {
     assertEq(dNft.publicMints(), 2);
     assertEq(dNft.id2Shares(id2), 6000e18);
   }
+  function testFuzz_MintNft(uint eth) public {
+    vm.assume(eth > 5 ether);
+    vm.assume(eth <= address(msg.sender).balance);
+
+    uint id = dNft.mint{value: eth}(address(this));
+    assertEq(dNft.id2Shares(id), eth*1000); // ETH 2 USD = $1000
+  }
   function testCannot_MintToZeroAddress() public {
     vm.expectRevert("ERC721: mint to the zero address");
     dNft.mint{value: 5 ether}(address(0));
@@ -81,6 +88,13 @@ contract DNftsTest is BaseTest {
 
     dNft.deposit{value: 5 ether}(id);
     assertEq(dNft.id2Shares(id), 10000e18);
+  }
+  function testFuzz_Deposit(uint eth) public {
+    vm.assume(eth > 0);
+    vm.assume(eth <= address(msg.sender).balance);
+
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    dNft.deposit{value: eth}(id);
   }
 
   // -------------------- move --------------------
