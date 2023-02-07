@@ -349,4 +349,27 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
     dNft.grant(id, ps);
   }
+
+  // -------------------- unlock --------------------
+  function test_Unlock() public {
+    vm.prank(MAINNET_OWNER);
+    uint id = dNft._mint(address(this));
+    dNft.unlock(id);
+  }
+  function testCannot_UnlockIsNotOwner() public {
+    vm.prank(MAINNET_OWNER);
+    uint id = dNft._mint(address(this));
+
+    vm.prank(address(1));
+    vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
+    dNft.unlock(id);
+  }
+  function testCannot_UnlockIsAlreadyUnlocked() public {
+    vm.prank(MAINNET_OWNER);
+    uint id = dNft._mint(address(this));
+
+    dNft.unlock(id);
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotLocked.selector));
+    dNft.unlock(id);
+  }
 }
