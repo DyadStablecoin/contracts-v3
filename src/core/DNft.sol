@@ -81,7 +81,6 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   /// @inheritdoc IDNft
   function _mint(address to)
     external 
-    payable 
       onlyOwner
     returns (uint) {
       if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
@@ -165,8 +164,8 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     returns (uint) { 
       dyad.burn(msg.sender, amount); // reverts if `from` doesn't have enough DYAD
       uint eth = _dyad2eth(amount);
-      to.safeTransferETH(eth);      // re-entrancy vector
       emit RedeemedDyad(msg.sender, amount, to, eth);
+      to.safeTransferETH(eth);      // re-entrancy vector
       return eth;
   }
 
@@ -178,8 +177,8 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     returns (uint) { 
       _subDeposit(from, amount); // fails if `from` doesn't have enough shares
       uint eth = _dyad2eth(amount);
-      to.safeTransferETH(eth); // re-entrancy vector
       emit RedeemedDeposit(from, amount, to, eth);
+      to.safeTransferETH(eth); // re-entrancy vector
       return eth;
   }
 

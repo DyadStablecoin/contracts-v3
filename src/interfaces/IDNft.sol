@@ -63,7 +63,7 @@ interface IDNft is IPermissionManager {
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
-  function _mint(address to) external payable returns (uint id);
+  function _mint(address to) external returns (uint id);
 
   /**
    * @notice Deposit ETH for deposited DYAD
