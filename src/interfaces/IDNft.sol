@@ -186,6 +186,8 @@ interface IDNft is IPermissionManager {
    * @dev For Auditors:
    *      - No need to check if the dNFT exists because a dNFT `transfer` will
    *        revert if it does not exist.
+   *      - We could save gas by not defining `newShares`, but this would make 
+   *        the code less readable. Hopefully the optimizer takes care of this.
    *      - All permissions for this dNFT are reset because `_transfer` calls 
    *        `_beforeTokenTransfer`, where we set `lastOwnershipChange`
    * @param id Id of the dNFT to liquidate

@@ -149,7 +149,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
-      _subDeposit(from, amount); // fails if `from` doesn't have enough shares
+      _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
@@ -175,7 +175,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(from, Permission.REDEEM)
       isNotLocked(from)
     returns (uint) { 
-      _subDeposit(from, amount); // fails if `from` doesn't have enough shares
+      _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
       uint eth = _dyad2eth(amount);
       emit RedeemedDeposit(from, amount, to, eth);
       to.safeTransferETH(eth); // re-entrancy vector
@@ -190,8 +190,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       uint shares    = id2Shares[id];
       uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHLD);
       if (shares > threshold) { revert NotLiquidatable(); }
-      uint newDeposit = _eth2dyad(msg.value);
-      uint newShares  = _addDeposit(id, newDeposit);
+      uint newShares  = _addDeposit(id, _eth2dyad(msg.value)); 
       if (shares + newShares <= threshold) { revert MissingShares(); }
       _transfer(ownerOf(id), to, id);
       emit Liquidated(to, id); 
