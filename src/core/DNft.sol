@@ -30,8 +30,8 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
 
-  mapping(uint => uint) public id2Shares;
-  mapping(uint => bool) public id2Locked;
+  mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
+  mapping(uint => bool) public id2Locked; // insider dNFT is locked after mint
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -102,8 +102,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
 
   /// @inheritdoc IDNft
   function deposit(uint id) 
-    public 
-      isOwnerOrHasPermission(id, Permission.DEPOSIT)
+    external 
     payable
     returns (uint) {
       return _deposit(id);
@@ -113,7 +112,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     private 
     returns (uint) {
       uint newDeposit = _eth2dyad(msg.value);
-      _addShares(id, newDeposit);
+      _addDeposit(id, newDeposit);
       return newDeposit;
   }
 
@@ -150,7 +149,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
-      _subShares(from, amount); // fails if `from` doesn't have enough shares
+      _subDeposit(from, amount); // fails if `from` doesn't have enough shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
@@ -176,7 +175,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       isOwnerOrHasPermission(from, Permission.REDEEM)
       isNotLocked(from)
     returns (uint) { 
-      _subShares(from, amount); // fails if `from` doesn't have enough shares
+      _subDeposit(from, amount); // fails if `from` doesn't have enough shares
       uint eth = _dyad2eth(amount);
       to.safeTransferETH(eth); // re-entrancy vector
       emit RedeemedDeposit(from, amount, to, eth);
@@ -192,7 +191,7 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHLD);
       if (shares > threshold) { revert NotLiquidatable(); }
       uint newDeposit = _eth2dyad(msg.value);
-      uint newShares  = _addShares(id, newDeposit);
+      uint newShares  = _addDeposit(id, newDeposit);
       if (shares + newShares <= threshold) { revert MissingShares(); }
       _transfer(ownerOf(id), to, id);
       emit Liquidated(to, id); 
@@ -216,10 +215,10 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       emit Unlocked(id);
   }
 
-  function _addShares(uint id, uint amount)
+  function _addDeposit(uint id, uint amount)
     private
     returns (uint) {
-      uint shares    = _convert2Shares(amount);
+      uint shares    = _deposit2Shares(amount);
       id2Shares[id] += shares;
       totalShares   += shares;
       totalDeposit  += amount;
@@ -227,10 +226,10 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return shares;
   }
 
-  function _subShares(uint id, uint amount)
+  function _subDeposit(uint id, uint amount)
     private
     returns (uint) {
-      uint shares    = _convert2Shares(amount);
+      uint shares    = _deposit2Shares(amount);
       id2Shares[id] -= shares;
       totalShares   -= shares;
       totalDeposit  -= amount;
@@ -238,7 +237,16 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return shares;
   }
 
-  // Return the value of `eth` in DYAD
+  // Convert `amount` of deposit to the shares it represents
+  function _deposit2Shares(uint amount) 
+    private 
+    view 
+    returns (uint) {
+      if (totalShares == 0) { return amount; }
+      return amount.mulDivDown(totalShares, totalDeposit);
+  }
+
+  // Return the value of ETH in DYAD
   function _eth2dyad(uint eth) 
     private 
     view 
@@ -246,19 +254,12 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
       return eth * _getEthPrice()/1e8; 
   }
 
+  // Return the value of DYAD in ETH
   function _dyad2eth(uint _dyad)
     private 
     view 
     returns (uint) {
       return _dyad*1e8 / _getEthPrice();
-  }
-
-  function _convert2Shares(uint amount) 
-    private 
-    view 
-    returns (uint) {
-      if (totalShares == 0) { return amount; }
-      return amount.mulDivDown(totalShares, totalDeposit);
   }
 
   // ETH price in USD

@@ -2,7 +2,7 @@
 pragma solidity =0.8.17;
 
 interface IPermissionManager {
-  enum Permission { DEPOSIT, MOVE, WITHDRAW, REDEEM }
+  enum Permission { MOVE, WITHDRAW, REDEEM }
 
   error MissingPermission();
   error NotOwner         ();

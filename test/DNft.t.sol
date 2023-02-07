@@ -82,11 +82,6 @@ contract DNftsTest is BaseTest {
     dNft.deposit{value: 5 ether}(id);
     assertEq(dNft.id2Shares(id), 10000e18);
   }
-  function testCannot_DepositIsNotOwner() public {
-    uint id = dNft.mint{value: 5 ether}(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
-    dNft.deposit{value: 5 ether}(id);
-  }
 
   // -------------------- move --------------------
   function test_Move() public {
@@ -244,14 +239,12 @@ contract DNftsTest is BaseTest {
   function test_Grant() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
 
-    IP.Permission[] memory pp = new IP.Permission[](2);
-    pp[0] = IP.Permission.DEPOSIT;
-    pp[1] = IP.Permission.MOVE;
+    IP.Permission[] memory pp = new IP.Permission[](1);
+    pp[0] = IP.Permission.MOVE;
 
     IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
     ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
 
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.DEPOSIT));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
 
@@ -259,14 +252,13 @@ contract DNftsTest is BaseTest {
     vm.roll(block.number + 1);
     dNft.grant(id, ps);
 
-    assertTrue(dNft.hasPermission(id, address(1), IP.Permission.DEPOSIT));
     assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
   }
   function testCannot_GrantIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
     IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.DEPOSIT;
+    pp[0] = IP.Permission.MOVE;
     IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
     ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
 

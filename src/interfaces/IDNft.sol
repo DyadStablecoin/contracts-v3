@@ -68,8 +68,7 @@ interface IDNft is IPermissionManager {
   /**
    * @notice Deposit ETH for deposited DYAD
    * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT AND does not have the
-   *        `DEPOSIT` permission
+   *      - If `totalDeposit` equals 0
    * @dev Emits:
    *      - AddedShares(uint indexed id, uint amount)
    * @dev For Auditors:
