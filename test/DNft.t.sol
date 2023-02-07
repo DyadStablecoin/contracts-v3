@@ -110,6 +110,17 @@ contract DNftsTest is BaseTest {
     assertEq(dNft.id2Shares(id1), 4000e18);
     assertEq(dNft.id2Shares(id2), 6000e18);
   }
+  function testFuzz_Move(uint eth) public {
+    vm.assume(eth > 5 ether);
+    vm.assume(eth <= address(msg.sender).balance/2);
+
+    uint id1 = dNft.mint{value: eth}(address(this));
+    uint id2 = dNft.mint{value: eth}(address(this));
+
+    dNft.move(id1, id2, eth*1000);
+    assertEq(dNft.id2Shares(id1), 0);
+    assertEq(dNft.id2Shares(id2), eth*1000*2);
+  }
   function testCannot_MoveIsNotOwner() public {
     uint id1 = dNft.mint{value: 5 ether}(address(1));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
@@ -127,13 +138,15 @@ contract DNftsTest is BaseTest {
 
   // -------------------- rebase --------------------
   function test_Rebase() public {
-    dNft.mint{value: 6 ether}(address(this));
-    uint id2 = dNft.mint{value: 6 ether}(address(this));
+    dNft.mint{value: 5 ether}(address(this));
+    uint oldDeposit = dNft.totalDeposit();
+    assertEq(oldDeposit, 5000e18);
 
-    oracleMock.setPrice(1100e8);
+    oracleMock.setPrice(1100e8); // 10% increase
     dNft.rebase();
 
-    dNft.withdraw(id2, address(1), 1000e18);
+    uint newDeposit = dNft.totalDeposit();
+    assertEq(newDeposit, 5000e18 + 500e18);
   }
 
   // -------------------- withdraw --------------------
