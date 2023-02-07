@@ -8,7 +8,7 @@ contract PermissionManager is IPermissionManager {
   using PermissionMath for Permission[];
   using PermissionMath for uint8;
 
-  mapping(uint => uint)                              public id2LastOwnershipChange;
+  mapping(uint => uint) /* id => block number */     public id2LastOwnershipChange;
   mapping(uint => mapping(address => NftPermission)) public id2NftPermission; 
 
   // Grant or revoke permissions
@@ -25,7 +25,7 @@ contract PermissionManager is IPermissionManager {
             lastUpdated: _blockNumber
           });
         }
-        unchecked { i++; }
+        unchecked { ++i; }
       }
       emit Modified(id, permissionSets);
   }
