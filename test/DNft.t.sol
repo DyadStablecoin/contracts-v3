@@ -178,6 +178,10 @@ contract DNftsTest is BaseTest {
     );
     assertTrue(newDeposit < oldDeposit);
   }
+  function testCannot_RebaseSamePrice() public {
+    vm.expectRevert(abi.encodeWithSelector(IDNft.SamePrice.selector));
+    dNft.rebase();
+  }
 
   // -------------------- withdraw --------------------
   function test_Withdraw() public {
