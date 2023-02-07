@@ -104,8 +104,9 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   function deposit(uint id) 
     external 
     payable
-    returns (uint) {
-      return _deposit(id);
+    returns (uint) 
+  {
+    return _deposit(id);
   }
 
   function _deposit(uint id) 
@@ -227,14 +228,12 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
   }
 
   function _subDeposit(uint id, uint amount)
-    private
-    returns (uint) {
+    private {
       uint shares    = _deposit2Shares(amount);
       id2Shares[id] -= shares;
       totalShares   -= shares;
       totalDeposit  -= amount;
       emit RemovedShares(id, shares);
-      return shares;
   }
 
   // Convert `amount` of deposit to the shares it represents
