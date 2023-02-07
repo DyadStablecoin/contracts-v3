@@ -6,4 +6,4 @@ out = 'out'
 libs = ['lib']
 
 # viaIR = true 
-optimizer_runs = 200
+optimizer_runs = 1_000_000
