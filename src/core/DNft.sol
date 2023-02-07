@@ -240,8 +240,9 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     private 
     view 
     returns (uint) {
-      if (totalShares == 0) { return amount; }
-      uint shares = amount.mulDivDown(totalShares, totalDeposit);
+      uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
+      if (_totalShares == 0) { return amount; }
+      uint shares = amount.mulDivDown(_totalShares, totalDeposit);
       if (shares == 0) { revert ZeroShares(); } // Check rounding down error 
       return shares;
   }
