@@ -26,6 +26,7 @@ interface IDNft is IPermissionManager {
   error CrTooLow          ();
   error Locked            ();
   error NotLocked         ();
+  error ZeroShares        ();
 
   /**
    * @notice Mint a new dNFT to `to`

@@ -229,10 +229,10 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    dNft.deposit{value: 100000 ether}(id1);
+    dNft.deposit{value: 10000 ether}(id1);
 
     vm.expectRevert(abi.encodeWithSelector(IDNft.MissingShares.selector));
-    dNft.liquidate(id2, address(1));
+    dNft.liquidate{value: 1 ether}(id2, address(1));
   }
 
   // -------------------- grant --------------------

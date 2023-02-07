@@ -241,7 +241,9 @@ contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
     view 
     returns (uint) {
       if (totalShares == 0) { return amount; }
-      return amount.mulDivDown(totalShares, totalDeposit);
+      uint shares = amount.mulDivDown(totalShares, totalDeposit);
+      if (shares == 0) { revert ZeroShares(); } // Check rounding down error 
+      return shares;
   }
 
   // Return the value of ETH in DYAD
