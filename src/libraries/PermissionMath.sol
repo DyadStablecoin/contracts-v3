@@ -26,4 +26,3 @@ library PermissionMath {
       hasPermission = (_representation & _bitMask) != 0;
   }
 }
-

@@ -12,7 +12,7 @@ import {IDNft} from "../interfaces/IDNft.sol";
 import {Dyad} from "./Dyad.sol";
 import {PermissionManager} from "./PermissionManager.sol";
 
-contract DNft is IDNft, ERC721Enumerable, PermissionManager, Owned {
+contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   using SafeTransferLib   for address;
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
