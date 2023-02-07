@@ -297,7 +297,7 @@ contract DNftsTest is BaseTest {
   }
 
   // -------------------- grant --------------------
-  function test_Grant() public {
+  function test_GrantAddPermission() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
 
     IP.Permission[] memory pp = new IP.Permission[](1);
@@ -315,6 +315,29 @@ contract DNftsTest is BaseTest {
 
     assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
+  }
+  function test_GrantRevokePermission() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+
+    IP.Permission[] memory pp = new IP.Permission[](1);
+    pp[0] = IP.Permission.MOVE;
+
+    IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
+    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+
+    // can not give permission in the same block as it was minted in
+    vm.roll(block.number + 1);
+    dNft.grant(id, ps);
+
+    assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
+
+    pp = new IP.Permission[](0);
+    ps = new IP.PermissionSet[](1);
+    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+
+    dNft.grant(id, ps);
+
+    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
   }
   function testCannot_GrantIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));

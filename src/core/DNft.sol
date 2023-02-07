@@ -36,10 +36,10 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   Dyad          public dyad;
   IAggregatorV3 public oracle;
 
-  modifier isOwner(uint id) {
+  modifier isNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
-  modifier isOwnerOrHasPermission(uint id, Permission permission) {
+  modifier isNftOwnerOrHasPermission(uint id, Permission permission) {
     if (
       ownerOf(id) != msg.sender && 
       !hasPermission(id, msg.sender, permission)
@@ -119,7 +119,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function move(uint from, uint to, uint shares) 
     external 
-      isOwnerOrHasPermission(from, Permission.MOVE) 
+      isNftOwnerOrHasPermission(from, Permission.MOVE) 
     {
       id2Shares[from] -= shares;
       id2Shares[to]   += shares;
@@ -146,7 +146,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount)
     external 
-      isOwnerOrHasPermission(from, Permission.WITHDRAW)
+      isNftOwnerOrHasPermission(from, Permission.WITHDRAW)
       isNotLocked(from)
     returns (uint) {
       _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
@@ -172,7 +172,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function redeemDeposit(uint from, address to, uint amount)
     external 
-      isOwnerOrHasPermission(from, Permission.REDEEM)
+      isNftOwnerOrHasPermission(from, Permission.REDEEM)
       isNotLocked(from)
     returns (uint) { 
       _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
@@ -199,7 +199,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function grant(uint id, PermissionSet[] calldata permissionSets) 
     external 
-      isOwner(id) 
+      isNftOwner(id) 
     {
       _grant(id, permissionSets);
   }
@@ -207,7 +207,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function unlock(uint id) 
     external
-      isOwner(id)
+      isNftOwner(id)
       isLocked(id)
     {
       id2Locked[id] = false;
