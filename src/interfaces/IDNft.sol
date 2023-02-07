@@ -69,6 +69,7 @@ interface IDNft is IPermissionManager {
   /**
    * @notice Deposit ETH for deposited DYAD
    * @dev Will revert:
+   *      - If new deposit equals zero shares
    *      - If `totalDeposit` equals 0
    * @dev Emits:
    *      - AddedShares(uint indexed id, uint amount)
@@ -115,6 +116,7 @@ interface IDNft is IPermissionManager {
    *      - If `msg.sender` is not the owner of the dNFT AND does not have the
    *        `WITHDRAW` permission
    *      - If `amount` to withdraw is larger than the dNFT deposit
+   *      - If deposit to withdraw equals zero shares
    *      - If Collateralization Ratio is is less than the min collaterization 
    *        ratio after the withdrawal
    * @dev Emits:
@@ -155,6 +157,7 @@ interface IDNft is IPermissionManager {
    *      - If `msg.sender` is not the owner of the dNFT AND does not have the
    *        `REDEEM` permission
    *      - If dNFT is locked
+   *      - If deposit to withdraw equals zero shares
    *      - If deposited DYAD to redeem is larger than the dNFT deposit
    *      - If the ETH transfer fails
    * @dev Emits:
@@ -176,6 +179,7 @@ interface IDNft is IPermissionManager {
    *         to a new owner
    * @dev Will revert:
    *      - If dNFT shares are not under the `LIQUIDATION_THRESHLD`
+   *      - If new deposit equals zero shares
    *      - If ETH sent is not enough to cover the missing shares
    * @dev Emits:
    *      - Liquidated(address indexed to, uint indexed id)
