@@ -201,11 +201,11 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   }
 
   /// @inheritdoc IDNft
-  function grant(uint id, PermissionSet[] calldata permissionSets) 
+  function grant(uint id, OperatorPermission[] calldata operatorPermissions) 
     external 
       isNftOwner(id) 
     {
-      _grant(id, permissionSets);
+      _grant(id, operatorPermissions);
   }
 
   /// @inheritdoc IDNft

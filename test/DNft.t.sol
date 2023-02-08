@@ -321,8 +321,8 @@ contract DNftsTest is BaseTest {
     IP.Permission[] memory pp = new IP.Permission[](1);
     pp[0] = IP.Permission.MOVE;
 
-    IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
-    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
+    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
 
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
     assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
@@ -340,8 +340,8 @@ contract DNftsTest is BaseTest {
     IP.Permission[] memory pp = new IP.Permission[](1);
     pp[0] = IP.Permission.MOVE;
 
-    IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
-    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
+    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
 
     // can not give permission in the same block as it was minted in
     vm.roll(block.number + 1);
@@ -350,8 +350,8 @@ contract DNftsTest is BaseTest {
     assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
 
     pp = new IP.Permission[](0);
-    ps = new IP.PermissionSet[](1);
-    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+    ps = new IP.OperatorPermission[](1);
+    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
 
     dNft.grant(id, ps);
 
@@ -361,8 +361,8 @@ contract DNftsTest is BaseTest {
     uint id = dNft.mint{value: 5 ether}(address(1));
     IP.Permission[] memory pp = new IP.Permission[](1);
     pp[0] = IP.Permission.MOVE;
-    IP.PermissionSet[] memory ps = new IP.PermissionSet[](1);
-    ps[0] = IP.PermissionSet({ operator: address(1), permissions: pp });
+    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
+    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
 
     vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
     dNft.grant(id, ps);

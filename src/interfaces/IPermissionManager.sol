@@ -7,11 +7,11 @@ interface IPermissionManager {
   error MissingPermission();
   error NotOwner         ();
 
-  event Modified(uint indexed id, PermissionSet[] permissions);
+  event Modified(uint indexed id, OperatorPermission[] operatorPermission);
 
-  struct PermissionSet {
-    address operator;         // The address of the operator
+  struct OperatorPermission {
     Permission[] permissions; // The permissions given to the operator
+    address operator;         // The address of the operator
   }
 
   struct NftPermission {
