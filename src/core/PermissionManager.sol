@@ -8,37 +8,36 @@ contract PermissionManager is IPermissionManager {
   using PermissionMath for Permission[];
   using PermissionMath for uint8;
 
-  mapping(uint => uint) /* id => block number */     public id2LastOwnershipChange;
+  // id => blockNumber
+  mapping(uint => uint)                              public id2LastOwnershipChange;
+  // id => (operator => NftPermission)
   mapping(uint => mapping(address => NftPermission)) public id2NftPermission; 
 
   // Grant or revoke permissions
   function _grant(uint id, OperatorPermission[] calldata operatorPermissions) 
     internal {
-      uint248 blockNumber = uint248(block.number);
       for (uint i = 0; i < operatorPermissions.length; ) {
-        OperatorPermission memory _permissionSet = operatorPermissions[i];
-        if (_permissionSet.permissions.length == 0) {
-          delete id2NftPermission[id][_permissionSet.operator];
+        OperatorPermission memory operatorPermission = operatorPermissions[i];
+        if (operatorPermission.permissions.length == 0) {
+          delete id2NftPermission[id][operatorPermission.operator]; // revoke permissions
         } else {
-          id2NftPermission[id][_permissionSet.operator] = NftPermission(
-            _permissionSet.permissions._toUInt8(),
-            blockNumber
+          id2NftPermission[id][operatorPermission.operator] = NftPermission(
+            operatorPermission.permissions._toUInt8(),
+            uint248(block.number)
           );
         }
         unchecked { ++i; }
       }
-      emit Modified(id, operatorPermissions);
+      emit Granted(id, operatorPermissions);
   }
 
-  // Check if operator has permission for dNFT with id
+  /// @inheritdoc IPermissionManager
   function hasPermission(uint id, address operator, Permission permission) 
     public 
     view 
     returns (bool) {
-      NftPermission memory _nftPermission = id2NftPermission[id][operator];
-      return _nftPermission.permissions._hasPermission(permission) &&
-        // If there was an ownership change after the permission was last updated,
-        // then the operator doesn't have the permission
-        id2LastOwnershipChange[id] < _nftPermission.lastUpdated;
+      NftPermission memory nftPermission = id2NftPermission[id][operator];
+      return nftPermission.permissions._hasPermission(permission) &&
+        id2LastOwnershipChange[id] < nftPermission.lastUpdated;
   }
 }
