@@ -91,7 +91,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     private 
     returns (uint) {
       uint id = totalSupply();
-      _mint(to, id); // will revert if `to` == address(0)
+      _mint(to, id);
       emit Minted(to, id);
       return id;
   }
