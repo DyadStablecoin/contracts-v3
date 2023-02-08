@@ -46,10 +46,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     ) revert MissingPermission(); 
     _;
   }
-  modifier isLocked(uint id) {
-    if (!id2Locked[id]) revert NotLocked(); _;
-  }
-  modifier isNotLocked(uint id) {
+  modifier isUnlocked(uint id) {
     if (id2Locked[id]) revert Locked(); _;
   }
 
@@ -147,7 +144,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function withdraw(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from, Permission.WITHDRAW)
-      isNotLocked(from)
+      isUnlocked(from)
     returns (uint) {
       _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
@@ -170,7 +167,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function redeemDeposit(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from, Permission.REDEEM)
-      isNotLocked(from)
+      isUnlocked(from)
     returns (uint) { 
       _subDeposit(from, amount); 
       return _redeem(to, amount);
@@ -189,7 +186,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
-      isNotLocked(id)
+      isUnlocked(id)
     payable {
       uint shares    = id2Shares[id];
       uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHLD);
@@ -213,8 +210,8 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function unlock(uint id) 
     external
       isNftOwner(id)
-      isLocked(id)
     {
+      if (!id2Locked[id]) revert NotLocked();
       id2Locked[id] = false;
       emit Unlocked(id);
   }
