@@ -182,7 +182,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     returns (uint) { 
       uint eth = _dyad2eth(amount);
       emit Redeemed(msg.sender, amount, to, eth);
-      to.safeTransferETH(eth); // re-entrancy vector
+      to.safeTransferETH(eth); // re-entrancy 
       return eth;
   }
 
