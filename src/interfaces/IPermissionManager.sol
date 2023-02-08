@@ -10,12 +10,12 @@ interface IPermissionManager {
   event Modified(uint indexed id, OperatorPermission[] operatorPermission);
 
   struct OperatorPermission {
-    Permission[] permissions; // The permissions given to the operator
-    address operator;         // The address of the operator
+    Permission[] permissions; // Permissions given to the operator
+    address operator;
   }
 
   struct NftPermission {
-    uint8   permissions;
-    uint248 lastUpdated; // The block number when it was last updated
+    uint8   permissions; // Bit map of the permissions
+    uint248 lastUpdated; // The block number of the last permissions update
   }
 }

@@ -12,11 +12,11 @@ contract PermissionManager is IPermissionManager {
   mapping(uint => mapping(address => NftPermission)) public id2NftPermission; 
 
   // Grant or revoke permissions
-  function _grant(uint id, OperatorPermission[] calldata OperatorPermissions) 
+  function _grant(uint id, OperatorPermission[] calldata operatorPermissions) 
     internal {
       uint248 blockNumber = uint248(block.number);
-      for (uint i = 0; i < OperatorPermissions.length; ) {
-        OperatorPermission memory _permissionSet = OperatorPermissions[i];
+      for (uint i = 0; i < operatorPermissions.length; ) {
+        OperatorPermission memory _permissionSet = operatorPermissions[i];
         if (_permissionSet.permissions.length == 0) {
           delete id2NftPermission[id][_permissionSet.operator];
         } else {
@@ -27,7 +27,7 @@ contract PermissionManager is IPermissionManager {
         }
         unchecked { ++i; }
       }
-      emit Modified(id, OperatorPermissions);
+      emit Modified(id, operatorPermissions);
   }
 
   // Check if operator has permission for dNFT with id
