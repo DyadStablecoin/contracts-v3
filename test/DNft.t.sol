@@ -12,6 +12,7 @@ contract DNftsTest is BaseTest {
   function test_Constructor() public {
     assertEq(dNft.owner(), MAINNET_OWNER);
     assertTrue(dNft.ethPrice() > 0);
+    assertTrue(address(dNft.oracle()) != address(0));
   }
 
   // -------------------- mint --------------------
