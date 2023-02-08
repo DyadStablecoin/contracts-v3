@@ -14,18 +14,16 @@ interface IDNft is IPermissionManager {
   event Withdrawn (uint indexed from, address indexed to, uint amount);
   event Rebased   (uint supplyDelta);
 
-  error InsiderMintsExceeded();
+  error SamePrice           ();
+  error DepositTooLow       ();
+  error NotLiquidatable     ();
+  error MissingShares       ();
+  error CrTooLow            ();
+  error Locked              ();
+  error NotLocked           ();
+  error ZeroShares          ();
   error PublicMintsExceeded ();
-  error DepositedInSameBlock();
-  error SamePrice         ();
-  error DepositTooLow     ();
-  error NotLiquidatable   ();
-  error MissingShares     ();
-  error InsufficientShares();
-  error CrTooLow          ();
-  error Locked            ();
-  error NotLocked         ();
-  error ZeroShares        ();
+  error InsiderMintsExceeded();
 
   /**
    * @notice Mint a new dNFT to `to`
