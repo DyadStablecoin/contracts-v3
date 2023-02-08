@@ -23,6 +23,8 @@ interface IPermissionManager {
    * @notice Check if `operator` has `permission` for dNFT with `id`
    * @notice All permissions for a given dNFT are revoked when the dNFT is 
    *         transferred. This is why we check for the last ownership change.
+   *         This also means that we can not mint a DNft and grant it some
+   *         permissions in the same block.
    * @param id Id of the dNFT
    * @param operator Operator to check the permission for
    * @param permission Permission to check for

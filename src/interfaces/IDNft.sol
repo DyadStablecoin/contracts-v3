@@ -199,6 +199,8 @@ interface IDNft is IPermissionManager {
 
   /**
    * @notice Grant and/or revoke permissions
+   * @notice Minting a DNft and grant it some permissions in the same block is
+   *         not possible, because it could be exploited for regular transfers.
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
