@@ -225,7 +225,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       id2Shares[id] += shares;
       totalShares   += shares;
       totalDeposit  += amount;
-      emit AddedShares(id, shares);
+      emit Added(id, shares);
       return shares;
   }
 
@@ -235,7 +235,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       id2Shares[id] -= shares;
       totalShares   -= shares;
       totalDeposit  -= amount;
-      emit RemovedShares(id, shares);
+      emit Removed(id, shares);
   }
 
   // Convert `amount` of deposit to the shares it represents
