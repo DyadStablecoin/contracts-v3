@@ -314,6 +314,23 @@ contract DNftsTest is BaseTest {
     vm.expectRevert(abi.encodeWithSelector(IDNft.MissingShares.selector));
     dNft.liquidate{value: 1 ether}(id2, address(1));
   }
+  function testCannot_LiquidateNonExistentId() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    dNft.deposit{value: 100000 ether}(id1);
+
+    vm.expectRevert("ERC721: invalid token ID");
+    dNft.liquidate{value: 500000 ether}(3, address(1));
+  }
+  function testCannot_LiquidateLockedNft() public {
+    uint id1 = dNft.mint{value: 5 ether}(address(this));
+    dNft.deposit{value: 100000 ether}(id1);
+
+    vm.prank(MAINNET_OWNER);
+    uint id2 = dNft._mint(address(1));
+
+    vm.expectRevert(abi.encodeWithSelector(IDNft.Locked.selector));
+    dNft.liquidate{value: 500000 ether}(id2, address(1));
+  }
 
   // -------------------- grant --------------------
   function test_GrantAddPermission() public {

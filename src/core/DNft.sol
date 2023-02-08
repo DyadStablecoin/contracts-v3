@@ -31,7 +31,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   uint public publicMints;  // Number of public mints
 
   mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
-  mapping(uint => bool) public id2Locked; // insider dNFT is locked after mint
+  mapping(uint => bool) public id2Locked; // Insider dNFT is locked after mint
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -196,8 +196,9 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       if (shares > threshold) { revert NotLiquidatable(); }
       uint newShares  = _addDeposit(id, _eth2dyad(msg.value)); 
       if (shares + newShares <= threshold) { revert MissingShares(); }
-      _transfer(ownerOf(id), to, id);
-      emit Liquidated(to, id); 
+      address owner = ownerOf(id);
+      _transfer(owner, to, id);
+      emit Liquidated(owner, to, id); 
   }
 
   /// @inheritdoc IDNft

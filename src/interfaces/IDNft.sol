@@ -8,7 +8,7 @@ interface IDNft is IPermissionManager {
   event Added     (uint indexed id, uint amount);
   event Removed   (uint indexed id, uint amount);
   event Minted    (address indexed to, uint indexed id);
-  event Liquidated(address indexed to, uint indexed id);
+  event Liquidated(address indexed from, address indexed to, uint indexed id);
   event Redeemed  (address indexed from, uint amount, address indexed to, uint eth);
   event Moved     (uint indexed from, uint indexed to, uint amount);
   event Withdrawn (uint indexed from, address indexed to, uint amount);
