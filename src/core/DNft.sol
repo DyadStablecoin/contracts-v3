@@ -20,7 +20,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   uint public constant  INSIDER_MINTS             = 300; 
   uint public constant  PUBLIC_MINTS              = 1700; 
   uint public constant  MIN_COLLATERIZATION_RATIO = 3e18;     // 300%
-  uint public constant  LIQUIDATION_THRESHLD      = 0.001e18; // 0.1%
+  uint public constant  LIQUIDATION_THRESHOLD     = 0.001e18; // 0.1%
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
 
   uint public ethPrice;     // ETH price from the last `rebase`
@@ -188,7 +188,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       isUnlocked(id)
     payable {
       uint shares    = id2Shares[id];
-      uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHLD);
+      uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHOLD);
       if (shares > threshold) { revert NotLiquidatable(); }
       uint newShares  = _addDeposit(id, _eth2dyad(msg.value)); 
       if (shares + newShares <= threshold) { revert MissingShares(); }
