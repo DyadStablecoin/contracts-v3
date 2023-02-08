@@ -7,15 +7,28 @@ interface IPermissionManager {
   error MissingPermission();
   error NotOwner         ();
 
-  event Modified(uint indexed id, PermissionSet[] permissions);
+  event Granted(uint indexed id, OperatorPermission[] operatorPermission);
 
-  struct PermissionSet {
-    address operator;         // The address of the operator
-    Permission[] permissions; // The permissions given to the operator
+  struct OperatorPermission {
+    address operator;
+    Permission[] permissions; // Permissions given to the operator
   }
 
   struct NftPermission {
-    uint8   permissions;
-    uint248 lastUpdated; // The block number when it was last updated
+    uint8   permissions; // Bit map of the permissions
+    uint248 lastUpdated; // The block number of the last permissions update
   }
+
+  /**
+   * @notice Check if `operator` has `permission` for dNFT with `id`
+   * @notice All permissions for a given dNFT are revoked when the dNFT is 
+   *         transferred. This is why we check for the last ownership change.
+   *         This also means that we can not mint a DNft and grant it some
+   *         permissions in the same block.
+   * @param id Id of the dNFT
+   * @param operator Operator to check the permission for
+   * @param permission Permission to check for
+   * @return True if operator has permission, false otherwise
+   */
+  function hasPermission(uint id, address operator, Permission permission) external returns (bool);
 }
