@@ -145,14 +145,13 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     external 
       isNftOwnerOrHasPermission(from, Permission.WITHDRAW)
       isUnlocked(from)
-    returns (uint) {
-      _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
+    {
+      _subDeposit(from, amount); 
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
-      return newCollatRatio;
   }
 
   /// @inheritdoc IDNft

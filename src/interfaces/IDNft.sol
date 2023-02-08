@@ -122,12 +122,14 @@ interface IDNft is IPermissionManager {
    *      - To save gas it does not check if `amount` is 0 
    *      - To save gas it only fails implicitly if `from` does not have enough
    *        deposited DYAD, by an underflow in `_subDeposit`
+   *      - `collatVault` and `newCollatRatio` are only used once and are therfore
+   *        unneccessary declarations that I only use to make the code easier 
+   *        to read. Hopefully the optimizer will inline them.
    * @param from Id of the dNFT to withdraw from
    * @param to Address to send the DYAD to
    * @param amount Amount of DYAD to withdraw
-   * @return collatRatio New Collateralization Ratio after the withdrawal
    */
-  function withdraw(uint from, address to, uint amount) external returns (uint);
+  function withdraw(uint from, address to, uint amount) external;
 
   /**
    * @notice Redeem DYAD ERC20 for ETH
