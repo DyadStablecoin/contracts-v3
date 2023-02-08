@@ -255,6 +255,19 @@ contract DNftsTest is BaseTest {
     assertEq(dNft.id2Shares(id), 4000e18);
     assertEq(address(1).balance, 1 ether);
   }
+  function testFuzz_RedeemDeposit(uint eth) public {
+    vm.assume(eth > 5 ether);
+    vm.assume(eth <= address(msg.sender).balance);
+
+    uint id = dNft.mint{value: eth}(address(1));
+    assertEq(address(1).balance, 0 ether);
+
+    vm.prank(address(1));
+    dNft.redeemDeposit(id, address(1), eth*1000);
+
+    assertEq(dNft.id2Shares(id), 0);
+    assertEq(address(1).balance, eth);
+  }
   function testCannot_RedeemDepositIsLocked() public {
     vm.prank(MAINNET_OWNER);
     uint id = dNft._mint(address(this));
