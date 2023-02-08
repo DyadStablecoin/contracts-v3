@@ -55,8 +55,8 @@ interface IDNft is IPermissionManager {
    *      - Minted(address indexed to, uint indexed id)
    *      - AddedShares(uint indexed id, uint amount)
    * @dev For Auditors:
-   *      - I'm aware that I'm misuing the underscore convention to denote a 
-   *        private/internal function. I'm doing it to show that this should 
+   *      - I'm aware that I'm misusing the underscore convention to denote a 
+   *        private/internal function. I'm doing it to show that this can  
    *        not be called by anyone except for the contract owner.
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
