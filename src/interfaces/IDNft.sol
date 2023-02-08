@@ -4,16 +4,15 @@ pragma solidity = 0.8.17;
 import {IPermissionManager} from "./IPermissionManager.sol";
 
 interface IDNft is IPermissionManager {
-  event Unlocked       (uint indexed id);
-  event AddedShares    (uint indexed id, uint amount);
-  event RemovedShares  (uint indexed id, uint amount);
-  event Minted         (address indexed to, uint indexed id);
-  event Liquidated     (address indexed to, uint indexed id);
-  event RedeemedDyad   (address indexed from, uint dyad, address indexed to, uint eth);
-  event RedeemedDeposit(uint indexed from, uint dyad, address indexed to, uint eth);
-  event Moved          (uint indexed from, uint indexed to, uint amount);
-  event Withdrawn      (uint indexed from, address indexed to, uint amount);
-  event Rebased        (uint supplyDelta);
+  event Unlocked     (uint indexed id);
+  event AddedShares  (uint indexed id, uint amount);
+  event RemovedShares(uint indexed id, uint amount);
+  event Minted       (address indexed to, uint indexed id);
+  event Liquidated   (address indexed to, uint indexed id);
+  event Redeemed     (address indexed from, uint amount, address indexed to, uint eth);
+  event Moved        (uint indexed from, uint indexed to, uint amount);
+  event Withdrawn    (uint indexed from, address indexed to, uint amount);
+  event Rebased      (uint supplyDelta);
 
   error InsiderMintsExceeded();
   error PublicMintsExceeded ();
@@ -123,6 +122,8 @@ interface IDNft is IPermissionManager {
    *      - Withdrawn(uint indexed from, address indexed to, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `amount` is 0 
+   *      - To save gas it only fails implicitly if `from` does not have enough
+   *        deposited DYAD, by an underflow in `_subDeposit`
    * @param from Id of the dNFT to withdraw from
    * @param to Address to send the DYAD to
    * @param amount Amount of DYAD to withdraw
@@ -141,7 +142,8 @@ interface IDNft is IPermissionManager {
    *      - To save gas it does not check if `amount` is 0 
    *      - `dyad.burn` is called in the beginning so we can revert as fast as
    *        possible if `msg.sender` does not have enough DYAD. The dyad contract
-   *        is trusted so it introduces no re-entrancy risk.
+   *        is trusted so it introduces no re-entrancy risk. The revert is implicit
+   *        and happens in the _burn function of the ERC20 contract as an underflow.
    *      - There is a re-entrancy risk while transfering the ETH, that is why the 
    *        `all state changes are done before the ETH transfer. I do not see why
    *        a `nonReentrant` modifier would be needed here, lets save the gas.
@@ -164,6 +166,8 @@ interface IDNft is IPermissionManager {
    *      - RedeemedDeposit(uint indexed from, address indexed to, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `amount` is 0 
+   *      - To save gas it only fails implicitly if `from` does not have enough
+   *        deposited DYAD, by an underflow in `_subDeposit`
    *      - There is a re-entrancy risk while transfering the ETH, that is why the 
    *        `all state changes are done before the ETH transfer. I do not see why
    *        a `nonReentrant` modifier would be needed here, lets save the gas.

@@ -162,11 +162,8 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function redeemDyad(address to, uint amount)
     external 
     returns (uint) { 
-      dyad.burn(msg.sender, amount); // reverts if `from` doesn't have enough DYAD
-      uint eth = _dyad2eth(amount);
-      emit RedeemedDyad(msg.sender, amount, to, eth);
-      to.safeTransferETH(eth);      // re-entrancy vector
-      return eth;
+      dyad.burn(msg.sender, amount); 
+      return _redeem(to, amount);
   }
 
   /// @inheritdoc IDNft
@@ -175,9 +172,16 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       isNftOwnerOrHasPermission(from, Permission.REDEEM)
       isNotLocked(from)
     returns (uint) { 
-      _subDeposit(from, amount); // fails if `from` doesn't have enough deposit shares
+      _subDeposit(from, amount); 
+      return _redeem(to, amount);
+  }
+
+  // Redeem `amount` of DYAD to `to`
+  function _redeem(address to, uint amount)
+    private 
+    returns (uint) { 
       uint eth = _dyad2eth(amount);
-      emit RedeemedDeposit(from, amount, to, eth);
+      emit Redeemed(msg.sender, amount, to, eth);
       to.safeTransferETH(eth); // re-entrancy vector
       return eth;
   }
