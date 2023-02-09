@@ -202,13 +202,13 @@ interface IDNft is IPermissionManager {
   /**
    * @notice Grant and/or revoke permissions
    * @notice Minting a DNft and grant it some permissions in the same block is
-   *         not possible, because it could be exploited for regular transfers.
+   *         not possible, because it could be exploited by regular transfers.
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
    *      - Modified(uint indexed id, OperatorPermission[] operatorPermissions)
    * @dev To remove all permissions for a specific operator pass in an empty
-   *      Permission array for that PermissionSet
+   *      `Permission` array for that `OperatorPermission`
    * @param id Id of the dNFT's permissions to modify
    * @param operatorPermissions Permissions to grant and revoke for specific operators
    */
