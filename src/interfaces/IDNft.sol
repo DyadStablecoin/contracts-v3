@@ -1,9 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity = 0.8.17;
 
-import {IPermissionManager} from "./IPermissionManager.sol";
-
-interface IDNft is IPermissionManager {
+interface IDNft {
   event Unlocked  (uint indexed id);
   event Added     (uint indexed id, uint amount);
   event Removed   (uint indexed id, uint amount);
@@ -18,6 +16,8 @@ interface IDNft is IPermissionManager {
   error DepositTooLow       ();
   error NotLiquidatable     ();
   error MissingShares       ();
+  error MissingPermission   ();
+  error NotOwner            ();
   error CrTooLow            ();
   error Locked              ();
   error NotLocked           ();
@@ -210,9 +210,10 @@ interface IDNft is IPermissionManager {
    * @dev To remove all permissions for a specific operator pass in an empty
    *      `Permission` array for that `OperatorPermission`
    * @param id Id of the dNFT's permissions to modify
-   * @param operatorPermissions Permissions to grant and revoke for specific operators
+   * @param operator Operator to grant/revoke permissions for
+   * @param hasPermission Has permission or not
    */
-  function grant(uint id, OperatorPermission[] calldata operatorPermissions) external;
+  function grant(uint id, address operator, bool hasPermission) external;
 
   /**
    * @notice Unlock insider dNFT
