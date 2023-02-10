@@ -336,55 +336,23 @@ contract DNftsTest is BaseTest {
   // -------------------- grant --------------------
   function test_GrantAddPermission() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
-
-    IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.MOVE;
-
-    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
-
-    // can not give permission in the same block as it was minted in
-    vm.roll(block.number + 1);
-    dNft.grant(id, ps);
-
-    assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
+    dNft.grant(id, address(1), true);
+    (bool hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertTrue(hasPermission);
   }
   function test_GrantRevokePermission() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
-
-    IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.MOVE;
-
-    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    // can not give permission in the same block as it was minted in
-    vm.roll(block.number + 1);
-    dNft.grant(id, ps);
-
-    assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
-
-    pp = new IP.Permission[](0);
-    ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    dNft.grant(id, ps);
-
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
+    dNft.grant(id, address(1), true);
+    (bool hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertTrue(hasPermission);
+    dNft.grant(id, address(1), false);
+    (hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertFalse(hasPermission);
   }
   function testCannot_GrantIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
-    IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.MOVE;
-    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
-    dNft.grant(id, ps);
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotOwner.selector));
+    dNft.grant(id, address(1), false);
   }
 
   // -------------------- unlock --------------------

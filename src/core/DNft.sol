@@ -47,10 +47,10 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   }
   modifier isNftOwnerOrHasPermission(uint id) {
     if (
-      ownerOf(id) == msg.sender || 
+      ownerOf(id) != msg.sender && 
       (
-        id2Permission[id][msg.sender].hasPermission &&
-        id2Permission[id][msg.sender].lastUpdated > id2LastOwnershipChange[id] 
+        !id2Permission[id][msg.sender].hasPermission &&
+         id2Permission[id][msg.sender].lastUpdated <= id2LastOwnershipChange[id] 
       )
     ) revert MissingPermission(); 
     _;
