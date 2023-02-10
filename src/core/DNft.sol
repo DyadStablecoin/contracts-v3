@@ -46,6 +46,9 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     ) revert MissingPermission(); 
     _;
   }
+  modifier isValidNft(uint id) {
+    if (id >= totalSupply()) revert InvalidNft(); _;
+  }
   modifier isUnlocked(uint id) {
     if (id2Locked[id]) revert Locked(); _;
   }
@@ -100,6 +103,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function deposit(uint id) 
     external 
     payable
+      isValidNft(id)
     returns (uint) 
   {
     return _deposit(id);
@@ -116,6 +120,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function move(uint from, uint to, uint shares) 
     external 
+      isValidNft(to)
       isNftOwnerOrHasPermission(from, Permission.MOVE) 
     {
       id2Shares[from] -= shares;
