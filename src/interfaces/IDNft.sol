@@ -24,6 +24,8 @@ interface IDNft is IPermissionManager {
   error ZeroShares          ();
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
+  error IncompleteRound     ();
+  error StaleData           ();
 
   /**
    * @notice Mint a new dNFT to `to`
