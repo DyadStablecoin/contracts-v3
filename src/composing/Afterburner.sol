@@ -26,11 +26,11 @@ contract Afterburner is IAfterburner {
     dyadPlus = _dyadPlus;
   }
 
-  function deposit(uint id, address from, uint amount) 
+  function deposit(uint id, uint amount) 
     external
       isNftOwner(id) 
     {
-      dyad.transferFrom(from, address(this), amount);
+      dyad.transferFrom(msg.sender, address(this), amount);
       id2deposit[id] += amount;
   }
 
