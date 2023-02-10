@@ -120,8 +120,8 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function move(uint from, uint to, uint shares) 
     external 
-      isValidNft(to)
       isNftOwnerOrHasPermission(from, Permission.MOVE) 
+      isValidNft(to)
     {
       id2Shares[from] -= shares;
       id2Shares[to]   += shares;
