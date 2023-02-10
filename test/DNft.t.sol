@@ -5,7 +5,6 @@ import "forge-std/console.sol";
 import {BaseTest} from "./BaseTest.sol";
 import {Parameters} from "../src/Parameters.sol";
 import {IDNft} from "../src/interfaces/IDNft.sol";
-import {IPermissionManager as IP} from "../src/interfaces/IPermissionManager.sol";
 import {SharesMath} from "../src/libraries/SharesMath.sol";
 
 contract DNftsTest is BaseTest {
@@ -128,7 +127,7 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(1));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingPermission.selector));
     dNft.move(id1, id2, 1000e18);
   }
   function testCannot_MoveExceedsBalance() public {
@@ -211,7 +210,7 @@ contract DNftsTest is BaseTest {
   }
   function testCannot_WithdrawIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingPermission.selector));
     dNft.withdraw(id, address(1), 1000e18);
   }
   function testCannot_WithdrawCrTooLow() public {
@@ -285,7 +284,7 @@ contract DNftsTest is BaseTest {
   }
   function testCannot_RedeemDepositIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingPermission.selector));
     dNft.redeemDeposit(id, address(this), 1000e18);
   }
 
@@ -366,7 +365,7 @@ contract DNftsTest is BaseTest {
     uint id = dNft._mint(address(this));
 
     vm.prank(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotOwner.selector));
     dNft.unlock(id);
   }
   function testCannot_UnlockIsAlreadyUnlocked() public {
