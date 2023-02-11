@@ -22,8 +22,11 @@ interface IDNft {
   error Locked              ();
   error NotLocked           ();
   error ZeroShares          ();
+  error InvalidNft          ();
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
+  error IncompleteRound     ();
+  error StaleData           ();
 
   /**
    * @notice Mint a new dNFT to `to`

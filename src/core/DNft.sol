@@ -48,6 +48,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   modifier isNftOwnerOrHasPermission(uint id) {
     if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
+  modifier isValidNft(uint id) {
+    if (id >= totalSupply()) revert InvalidNft(); _;
+  }
   modifier isUnlocked(uint id) {
     if (id2Locked[id]) revert Locked(); _;
   }
@@ -102,6 +105,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function deposit(uint id) 
     external 
     payable
+      isValidNft(id)
     returns (uint) 
   {
     return _deposit(id);
@@ -119,6 +123,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function move(uint from, uint to, uint shares) 
     external 
       isNftOwnerOrHasPermission(from) 
+      isValidNft(to)
     {
       id2Shares[from] -= shares;
       id2Shares[to]   += shares;
@@ -283,7 +288,15 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     view 
     returns (uint) {
-      ( , int price, , , ) = oracle.latestRoundData();
+      (
+        uint80 roundID,
+        int256 price,
+        , 
+        uint256 timeStamp, 
+        uint80 answeredInRound
+      ) = oracle.latestRoundData();
+      if (timeStamp == 0) revert IncompleteRound();
+      if (answeredInRound < roundID) revert StaleData();
       return price.toUint256();
   }
 
