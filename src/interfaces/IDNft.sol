@@ -22,6 +22,7 @@ interface IDNft is IPermissionManager {
   error Locked              ();
   error NotLocked           ();
   error ZeroShares          ();
+  error InvalidNft          ();
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
 
