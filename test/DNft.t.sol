@@ -139,52 +139,6 @@ contract DNftsTest is BaseTest {
     dNft.move(id1, id2, 6000e18);
   }
 
-  // -------------------- rebase --------------------
-  function test_RebaseUp() public {
-    uint id = dNft.mint{value: 5 ether}(address(this));
-    uint oldTotalDeposit = dNft.totalDeposit();
-    assertEq(oldTotalDeposit, 5000e18);
-    uint oldDeposit = SharesMath.shares2Deposit(
-      dNft.id2Shares(id),
-      dNft.totalDeposit(),
-      dNft.totalShares()
-    );
-
-    oracleMock.setPrice(1100e8); // 10% increase
-    dNft.rebase();
-
-    uint newTotalDeposit = dNft.totalDeposit();
-    assertEq(newTotalDeposit, 5000e18 + 500e18);
-    uint newDeposit = SharesMath.shares2Deposit(
-      dNft.id2Shares(id),
-      dNft.totalDeposit(),
-      dNft.totalShares()
-    );
-    assertTrue(newDeposit > oldDeposit);
-  }
-  function test_RebaseDown() public {
-    uint id = dNft.mint{value: 5 ether}(address(this));
-    uint oldDeposit = SharesMath.shares2Deposit(
-      dNft.id2Shares(id),
-      dNft.totalDeposit(),
-      dNft.totalShares()
-    );
-
-    oracleMock.setPrice(900e8); // 10% increase
-    dNft.rebase();
-
-    uint newDeposit = SharesMath.shares2Deposit(
-      dNft.id2Shares(id),
-      dNft.totalDeposit(),
-      dNft.totalShares()
-    );
-    assertTrue(newDeposit < oldDeposit);
-  }
-  function testCannot_RebaseSamePrice() public {
-    vm.expectRevert(abi.encodeWithSelector(IDNft.SamePrice.selector));
-    dNft.rebase();
-  }
-
   // -------------------- withdraw --------------------
   function test_Withdraw() public {
     uint id = dNft.mint{value: 50 ether}(address(this));

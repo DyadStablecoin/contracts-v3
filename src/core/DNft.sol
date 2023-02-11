@@ -125,7 +125,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
 
   // Rebase DYAD total supply to reflect the latest price changes
   function _rebase() 
-    internal 
+    private 
     returns (uint) {
       uint newEthPrice = _getEthPrice();
       if (newEthPrice == ethPrice) return 0;
@@ -238,7 +238,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   // Convert `amount` of deposit to the shares it represents
   function _deposit2Shares(uint amount) 
     private 
-    view 
     returns (uint) {
       _rebase();
       uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
