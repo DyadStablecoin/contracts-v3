@@ -273,7 +273,15 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     private 
     view 
     returns (uint) {
-      ( , int price, , , ) = oracle.latestRoundData();
+      (
+        uint80 roundID,
+        int256 price,
+        , 
+        uint256 timeStamp, 
+        uint80 answeredInRound
+      ) = oracle.latestRoundData();
+      if (timeStamp == 0) revert IncompleteRound();
+      if (answeredInRound < roundID) revert StaleData();
       return price.toUint256();
   }
 
