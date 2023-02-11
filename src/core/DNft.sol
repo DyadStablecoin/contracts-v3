@@ -123,12 +123,12 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       emit Moved(from, to, shares);
   }
 
-  /// @inheritdoc IDNft
-  function rebase() 
-    external 
+  // Rebase DYAD total supply to reflect the latest price changes
+  function _rebase() 
+    internal 
     returns (uint) {
       uint newEthPrice = _getEthPrice();
-      if (newEthPrice == ethPrice) revert SamePrice();
+      if (newEthPrice == ethPrice) return 0;
       bool rebaseUp    = newEthPrice > ethPrice;
       uint priceChange = rebaseUp ? (newEthPrice - ethPrice).divWadDown(ethPrice)
                                   : (ethPrice - newEthPrice).divWadDown(ethPrice);
@@ -240,6 +240,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     private 
     view 
     returns (uint) {
+      _rebase();
       uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
       if (_totalShares == 0) { return amount; }
       uint shares = amount.mulDivDown(_totalShares, totalDeposit);
