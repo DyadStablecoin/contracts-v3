@@ -34,9 +34,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     uint248 lastUpdated;
   }
 
-  mapping(uint => uint)    public id2Shares; // dNFT deposit is stored in shares
-  mapping(uint => bool)    public id2Locked; // Insider dNFT is locked after mint
-  mapping(uint => uint248) public id2LastOwnershipChange; // id => blockNumber
+  mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
+  mapping(uint => bool) public id2Locked; // Insider dNFT is locked after mint
+  mapping(uint => uint) public id2LastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2Permission; // id => (operator => Permission)
 
   Dyad          public dyad;
@@ -296,6 +296,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   ) internal 
     override {
       super._beforeTokenTransfer(from, to, id, batchSize);
-      id2LastOwnershipChange[id] = uint248(block.number); // resets permissions
+      id2LastOwnershipChange[id] = block.number; // resets permissions
   }
 }
