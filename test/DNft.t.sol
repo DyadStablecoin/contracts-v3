@@ -333,25 +333,27 @@ contract DNftsTest is BaseTest {
   }
 
   // -------------------- grant --------------------
-  function test_GrantAddPermission() public {
+  function test_GrantPermission() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
-    dNft.grant(id, address(1), true);
+    dNft.grant(id, address(1));
     (bool hasPermission, ) = dNft.id2Permission(id, address(1));
     assertTrue(hasPermission);
-  }
-  function test_GrantRevokePermission() public {
-    uint id = dNft.mint{value: 5 ether}(address(this));
-    dNft.grant(id, address(1), true);
-    (bool hasPermission, ) = dNft.id2Permission(id, address(1));
-    assertTrue(hasPermission);
-    dNft.grant(id, address(1), false);
-    (hasPermission, ) = dNft.id2Permission(id, address(1));
-    assertFalse(hasPermission);
   }
   function testCannot_GrantIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
     vm.expectRevert(abi.encodeWithSelector(IDNft.NotOwner.selector));
-    dNft.grant(id, address(1), false);
+    dNft.grant(id, address(1));
+  }
+
+  // -------------------- revoke --------------------
+  function test_RevokePermission() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    dNft.grant(id, address(1));
+    (bool hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertTrue(hasPermission);
+    dNft.revoke(id, address(1));
+    (hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertFalse(hasPermission);
   }
 
   // -------------------- unlock --------------------

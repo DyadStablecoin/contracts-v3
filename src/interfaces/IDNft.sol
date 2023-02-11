@@ -203,7 +203,7 @@ interface IDNft {
   function liquidate(uint id, address to) external payable;
 
   /**
-   * @notice Grant and/or revoke permissions
+   * @notice Grant permission to an `operator`
    * @notice Minting a DNft and grant it some permissions in the same block is
    *         not possible, because it could be exploited by regular transfers.
    * @dev Will revert:
@@ -214,9 +214,23 @@ interface IDNft {
    *      `Permission` array for that `OperatorPermission`
    * @param id Id of the dNFT's permissions to modify
    * @param operator Operator to grant/revoke permissions for
-   * @param hasPermission Has permission or not
    */
-  function grant(uint id, address operator, bool hasPermission) external;
+  function grant(uint id, address operator) external;
+
+  /**
+   * @notice Revoke permission from an `operator`
+   * @notice Minting a DNft and grant it some permissions in the same block is
+   *         not possible, because it could be exploited by regular transfers.
+   * @dev Will revert:
+   *      - If `msg.sender` is not the owner of the dNFT  
+   * @dev Emits:
+   *      - Modified(uint indexed id, OperatorPermission[] operatorPermissions)
+   * @dev To remove all permissions for a specific operator pass in an empty
+   *      `Permission` array for that `OperatorPermission`
+   * @param id Id of the dNFT's permissions to modify
+   * @param operator Operator to grant/revoke permissions for
+   */
+  function revoke(uint id, address operator) external;
 
   /**
    * @notice Unlock insider dNFT
