@@ -43,4 +43,8 @@ contract BaseTest is Test, Parameters {
   function overwrite(address _contract, string memory signature, uint value) public {
     stdstore.target(_contract).sig(signature).checked_write(value); 
   }
+
+  function onERC721Received(address, address, uint256, bytes calldata) external pure returns (bytes4) {
+    return 0x150b7a02;
+  }
 }
