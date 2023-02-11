@@ -46,7 +46,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
   modifier isNftOwnerOrHasPermission(uint id) {
-    if (!hasPermission(id)) revert MissingPermission() ; _;
+    if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
   modifier isUnlocked(uint id) {
     if (id2Locked[id]) revert Locked(); _;
@@ -217,15 +217,15 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit Unlocked(id);
   }
 
-  function hasPermission(uint id) 
+  function hasPermission(uint id, address operator) 
     public 
     view 
     returns (bool) {
       return (
-        ownerOf(id) == msg.sender || 
+        ownerOf(id) == operator || 
         (
-          id2Permission[id][msg.sender].hasPermission && 
-          id2Permission[id][msg.sender].lastUpdated > id2LastOwnershipChange[id]
+          id2Permission[id][operator].hasPermission && 
+          id2Permission[id][operator].lastUpdated > id2LastOwnershipChange[id]
         )
       );
   }
