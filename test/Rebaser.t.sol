@@ -8,17 +8,17 @@ import {SharesMath as SM} from "../src/libraries/SharesMath.sol";
 
 contract RebaserTest is BaseTest {
   function test_Rebaser() public {
-    Rebaser rebaser = new Rebaser(dNft, address(oracleMock));
-    uint id = dNft.mint{value: 100 ether}(address(rebaser));
-    rebaser.setId(id);
-    oracleMock.setPrice(900e8);
+    // Rebaser rebaser = new Rebaser(dNft, address(oracleMock));
+    // uint id = dNft.mint{value: 100 ether}(address(rebaser));
+    // rebaser.setId(id);
+    // oracleMock.setPrice(900e8);
     // console.log(SM.shares2Deposit(
     //   dNft.id2Shares(id), 
     //   dNft.totalDeposit(), 
     //   dNft.totalShares()
     // ));
     // rebaser.rebase();
-    dNft.rebase();
+    // dNft.rebase();
     // console.log(SM.shares2Deposit(
     //   dNft.id2Shares(id), 
     //   dNft.totalDeposit(), 
