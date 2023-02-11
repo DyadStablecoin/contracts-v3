@@ -210,6 +210,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwner(id) 
     {
       id2Permission[id][operator] = Permission(true, uint248(block.number));
+      emit Granted(id, operator);
   }
 
   /// @inheritdoc IDNft
@@ -217,7 +218,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     external 
       isNftOwner(id) 
     {
-      id2Permission[id][operator] = Permission(false, 0); 
+      delete id2Permission[id][operator];
+      emit Revoked(id, operator);
   }
 
   /// @inheritdoc IDNft

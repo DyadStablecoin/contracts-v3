@@ -355,6 +355,11 @@ contract DNftsTest is BaseTest {
     (hasPermission, ) = dNft.id2Permission(id, address(1));
     assertFalse(hasPermission);
   }
+  function testCannot_RevokeIsNotOwner() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotOwner.selector));
+    dNft.revoke(id, address(1));
+  }
 
   // -------------------- unlock --------------------
   function test_Unlock() public {

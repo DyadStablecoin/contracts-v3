@@ -11,6 +11,8 @@ interface IDNft {
   event Moved     (uint indexed from, uint indexed to, uint amount);
   event Withdrawn (uint indexed from, address indexed to, uint amount);
   event Rebased   (uint supplyDelta);
+  event Granted   (uint indexed id, address indexed operator);
+  event Revoked   (uint indexed id, address indexed operator);
 
   error SamePrice           ();
   error DepositTooLow       ();
@@ -209,9 +211,7 @@ interface IDNft {
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
-   *      - Modified(uint indexed id, OperatorPermission[] operatorPermissions)
-   * @dev To remove all permissions for a specific operator pass in an empty
-   *      `Permission` array for that `OperatorPermission`
+   *      - Granted(uint indexed id, address indexed operator)
    * @param id Id of the dNFT's permissions to modify
    * @param operator Operator to grant/revoke permissions for
    */
@@ -219,16 +219,14 @@ interface IDNft {
 
   /**
    * @notice Revoke permission from an `operator`
-   * @notice Minting a DNft and grant it some permissions in the same block is
+   * @notice Minting a DNft and revoking the permission in the same block is
    *         not possible, because it could be exploited by regular transfers.
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
-   *      - Modified(uint indexed id, OperatorPermission[] operatorPermissions)
-   * @dev To remove all permissions for a specific operator pass in an empty
-   *      `Permission` array for that `OperatorPermission`
+   *      - Revoked(uint indexed id, address indexed operator)
    * @param id Id of the dNFT's permissions to modify
-   * @param operator Operator to grant/revoke permissions for
+   * @param operator Operator to revoke permissions from
    */
   function revoke(uint id, address operator) external;
 
