@@ -202,11 +202,15 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     external 
       isUnlocked(id)
     payable {
-      uint shares    = id2Shares[id];
-      uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHOLD);
-      if (shares > threshold) { revert NotLiquidatable(); }
+      uint shares      = id2Shares[id];
+      uint deposit     = _shares2Deposit(shares);
+      uint withdrawn   = id2Withdrawn[id];
+      uint collatRatio = deposit.divWadDown(withdrawn);
+      if (collatRatio >= MIN_COLLATERIZATION_RATIO)  revert NotLiquidatable(); 
       uint newShares  = _addDeposit(id, _eth2dyad(msg.value)); 
-      if (shares + newShares <= threshold) { revert MissingShares(); }
+      uint newDeposit = deposit + _shares2Deposit(newShares);
+      collatRatio     = newDeposit.divWadDown(withdrawn);
+      if (collatRatio < MIN_COLLATERIZATION_RATIO) { revert MissingShares(); }
       address owner = ownerOf(id);
       _transfer(owner, to, id);
       emit Liquidated(owner, to, id); 
@@ -260,6 +264,14 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       uint shares = amount.mulDivDown(_totalShares, totalDeposit);
       if (shares == 0) { revert ZeroShares(); } // Check rounding down error 
       return shares;
+  }
+
+  // Convert `amount` of deposit to the shares it represents
+  function _shares2Deposit(uint shares) 
+    private 
+    view 
+    returns (uint) {
+      return shares.mulDivUp(totalDeposit, totalShares);
   }
 
   // Return the value of ETH in DYAD
