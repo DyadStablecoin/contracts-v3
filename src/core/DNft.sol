@@ -161,9 +161,17 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       emit Withdrawn(from, to, amount);
   }
 
+  function redeemDyad(uint from, address to, uint amount)
+    external 
+      isNftOwner(from)
+    returns (uint) { 
+      id2Withdrawn[from] -= amount;
+      return redeemDyad(to, amount);
+  }
+
   /// @inheritdoc IDNft
   function redeemDyad(address to, uint amount)
-    external 
+    public 
     returns (uint) { 
       dyad.burn(msg.sender, amount); 
       return _redeem(to, amount);
