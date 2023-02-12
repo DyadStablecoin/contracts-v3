@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {DNft} from "../core/DNft.sol";
 import {Dyad} from "../core/Dyad.sol";
 import {DyadPlus} from "../composing/DyadPlus.sol";
@@ -8,10 +9,14 @@ import {Kerosine} from "../composing/Kerosine.sol";
 import {IAfterburner} from "../interfaces/IAfterburner.sol";
 
 contract Afterburner is IAfterburner {
+  using FixedPointMathLib for uint256;
+
   DNft     dNft;
   Dyad     dyad;
   DyadPlus dyadPlus;
   Kerosine kerosine;
+
+  uint totalXp;
 
   mapping(uint => uint) public id2xp; 
   mapping(uint => uint) public id2credit; 
@@ -53,10 +58,17 @@ contract Afterburner is IAfterburner {
 
   // burn kerosine for xp
   function burn(uint id, uint amount) 
-    external
-      isNftOwner(id) 
-    {
+    external {
       kerosine.burn(amount);
-      id2xp[id] = id2xp[id] + amount;
+      uint relativeXp = id2xp[id].divWadDown(totalXp);
+      uint reward     = amount.divWadDown(relativeXp);
+      _addXp(id, reward);
+  }
+
+  function _addXp(uint id, uint amount) 
+    internal {
+      id2xp[id] += amount;
+      totalXp   += amount;
+      emit AddedXp(id, amount);
   }
 }
