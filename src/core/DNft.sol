@@ -30,8 +30,9 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
 
-  mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
-  mapping(uint => bool) public id2Locked; // Insider dNFT is locked after mint
+  mapping(uint => uint) public id2Shares;    // dNFT deposit is stored in shares
+  mapping(uint => uint) public id2Withdrawn; // Withdrawn DYAD per dNFT
+  mapping(uint => bool) public id2Locked;    // Insider dNFT is locked after mint
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -155,6 +156,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
       uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
       if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      id2Withdrawn[from] += amount;
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
   }
