@@ -1,10 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity = 0.8.17;
 
-import {IPermissionManager} from "./IPermissionManager.sol";
-
-interface IDNft is IPermissionManager {
-  event Unlocked  (uint indexed id);
+interface IDNft {
   event Added     (uint indexed id, uint amount);
   event Removed   (uint indexed id, uint amount);
   event Minted    (address indexed to, uint indexed id);
@@ -13,14 +10,16 @@ interface IDNft is IPermissionManager {
   event Moved     (uint indexed from, uint indexed to, uint amount);
   event Withdrawn (uint indexed from, address indexed to, uint amount);
   event Rebased   (uint supplyDelta);
+  event Granted   (uint indexed id, address indexed operator);
+  event Revoked   (uint indexed id, address indexed operator);
 
   error SamePrice           ();
   error DepositTooLow       ();
   error NotLiquidatable     ();
   error MissingShares       ();
+  error MissingPermission   ();
+  error NotOwner            ();
   error CrTooLow            ();
-  error Locked              ();
-  error NotLocked           ();
   error ZeroShares          ();
   error InvalidNft          ();
   error PublicMintsExceeded ();
@@ -76,9 +75,22 @@ interface IDNft is IPermissionManager {
    * @dev For Auditors:
    *      - To save gas it does not check if `msg.value` is zero 
    * @param id Id of the dNFT that gets the deposited DYAD
-   * @return amount Amount of DYAD deposited
+   * @return shares Shares of DYAD deposited
    */
-  function deposit(uint id) external payable returns (uint);
+  function depositEth(uint id) external payable returns (uint);
+
+  /**
+   * @notice Deposit DYAD for deposited DYAD
+   * @dev Will revert:
+   *      - If new deposit equals zero shares
+   *      - If `totalDeposit` equals 0
+   * @dev Emits:
+   *      - AddedShares(uint indexed id, uint amount)
+   * @param id Id of the dNFT that gets the deposited DYAD
+   * @param amount Amount of DYAD to deposit
+   * @return shares Shares of DYAD deposited
+   */
+  function depositDyad(uint id, uint amount) external returns (uint);
 
   /**
    * @notice Move `shares` `from` one dNFT `to` another dNFT
@@ -203,28 +215,28 @@ interface IDNft is IPermissionManager {
   function liquidate(uint id, address to) external payable;
 
   /**
-   * @notice Grant and/or revoke permissions
+   * @notice Grant permission to an `operator`
    * @notice Minting a DNft and grant it some permissions in the same block is
    *         not possible, because it could be exploited by regular transfers.
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
-   *      - Modified(uint indexed id, OperatorPermission[] operatorPermissions)
-   * @dev To remove all permissions for a specific operator pass in an empty
-   *      `Permission` array for that `OperatorPermission`
+   *      - Granted(uint indexed id, address indexed operator)
    * @param id Id of the dNFT's permissions to modify
-   * @param operatorPermissions Permissions to grant and revoke for specific operators
+   * @param operator Operator to grant/revoke permissions for
    */
-  function grant(uint id, OperatorPermission[] calldata operatorPermissions) external;
+  function grant(uint id, address operator) external;
 
   /**
-   * @notice Unlock insider dNFT
+   * @notice Revoke permission from an `operator`
+   * @notice Minting a DNft and revoking the permission in the same block is
+   *         not possible, because it could be exploited by regular transfers.
    * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT 
-   *      - dNFT is not locked
+   *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
-   *      - Unlocked(uint indexed id)
-   * @param id Id of the dNFT to unlock
+   *      - Revoked(uint indexed id, address indexed operator)
+   * @param id Id of the dNFT's permissions to modify
+   * @param operator Operator to revoke permissions from
    */
-  function unlock(uint id) external;
+  function revoke(uint id, address operator) external;
 }

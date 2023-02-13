@@ -10,9 +10,8 @@ import {Owned} from "@solmate/src/auth/Owned.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IDNft} from "../interfaces/IDNft.sol";
 import {Dyad} from "./Dyad.sol";
-import {PermissionManager} from "./PermissionManager.sol";
 
-contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
+contract DNft is ERC721Enumerable, Owned, IDNft {
   using SafeTransferLib   for address;
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
@@ -30,9 +29,15 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
 
-  mapping(uint => uint) public id2Shares;    // dNFT deposit is stored in shares
+  struct Permission {
+    bool    hasPermission; 
+    uint248 lastUpdated;
+  }
+
+  mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
   mapping(uint => uint) public id2Withdrawn; // Withdrawn DYAD per dNFT
-  mapping(uint => bool) public id2Locked;    // Insider dNFT is locked after mint
+  mapping(uint => uint) public id2LastOwnershipChange; // id => blockNumber
+  mapping(uint => mapping (address => Permission)) public id2Permission; // id => (operator => Permission)
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -40,18 +45,11 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   modifier isNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
-  modifier isNftOwnerOrHasPermission(uint id, Permission permission) {
-    if (
-      ownerOf(id) != msg.sender && 
-      !hasPermission(id, msg.sender, permission)
-    ) revert MissingPermission(); 
-    _;
+  modifier isNftOwnerOrHasPermission(uint id) {
+    if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
   modifier isValidNft(uint id) {
     if (id >= totalSupply()) revert InvalidNft(); _;
-  }
-  modifier isUnlocked(uint id) {
-    if (id2Locked[id]) revert Locked(); _;
   }
 
   constructor(
@@ -74,7 +72,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
       uint id         = _mintNft(to); 
-      uint newDeposit = _deposit(id);
+      uint newDeposit = _depositEth(id);
       if (newDeposit < MIN_MINT_DYAD_DEPOSIT) revert DepositTooLow();
       return id;
   }
@@ -85,9 +83,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       onlyOwner
     returns (uint) {
       if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
-      uint id = _mintNft(to);
-      id2Locked[id] = true;
-      return id; 
+      return _mintNft(to); 
   }
 
   // Mint new DNft to `to`
@@ -101,16 +97,16 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   }
 
   /// @inheritdoc IDNft
-  function deposit(uint id) 
+  function depositEth(uint id) 
     external 
     payable
       isValidNft(id)
     returns (uint) 
   {
-    return _deposit(id);
+    return _depositEth(id);
   }
 
-  function _deposit(uint id) 
+  function _depositEth(uint id) 
     private 
     returns (uint) {
       uint newDeposit = _eth2dyad(msg.value);
@@ -119,9 +115,19 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   }
 
   /// @inheritdoc IDNft
+  function depositDyad(uint id, uint amount) 
+    external 
+      isValidNft(id)
+    returns (uint) 
+  {
+    dyad.burn(msg.sender, amount);
+    return _addDeposit(id, amount);
+  }
+
+  /// @inheritdoc IDNft
   function move(uint from, uint to, uint shares) 
     external 
-      isNftOwnerOrHasPermission(from, Permission.MOVE) 
+      isNftOwnerOrHasPermission(from) 
       isValidNft(to)
     {
       id2Shares[from] -= shares;
@@ -149,8 +155,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount)
     external 
-      isNftOwnerOrHasPermission(from, Permission.WITHDRAW)
-      isUnlocked(from)
+      isNftOwnerOrHasPermission(from)
     {
       _subDeposit(from, amount); 
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
@@ -180,8 +185,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function redeemDeposit(uint from, address to, uint amount)
     external 
-      isNftOwnerOrHasPermission(from, Permission.REDEEM)
-      isUnlocked(from)
+      isNftOwnerOrHasPermission(from)
     returns (uint) { 
       _subDeposit(from, amount); 
       return _redeem(to, amount);
@@ -200,7 +204,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
-      isUnlocked(id)
     payable {
       uint shares      = id2Shares[id];
       uint deposit     = _shares2Deposit(shares);
@@ -217,21 +220,34 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   }
 
   /// @inheritdoc IDNft
-  function grant(uint id, OperatorPermission[] calldata operatorPermissions) 
+  function grant(uint id, address operator) 
     external 
       isNftOwner(id) 
     {
-      _grant(id, operatorPermissions);
+      id2Permission[id][operator] = Permission(true, uint248(block.number));
+      emit Granted(id, operator);
   }
 
   /// @inheritdoc IDNft
-  function unlock(uint id) 
-    external
-      isNftOwner(id)
+  function revoke(uint id, address operator) 
+    external 
+      isNftOwner(id) 
     {
-      if (!id2Locked[id]) revert NotLocked();
-      id2Locked[id] = false;
-      emit Unlocked(id);
+      delete id2Permission[id][operator];
+      emit Revoked(id, operator);
+  }
+
+  function hasPermission(uint id, address operator) 
+    public 
+    view 
+    returns (bool) {
+      return (
+        ownerOf(id) == operator || 
+        (
+          id2Permission[id][operator].hasPermission && 
+          id2Permission[id][operator].lastUpdated > id2LastOwnershipChange[id]
+        )
+      );
   }
 
   function _addDeposit(uint id, uint amount)

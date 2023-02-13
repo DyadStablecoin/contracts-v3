@@ -5,7 +5,6 @@ import "forge-std/console.sol";
 import {BaseTest} from "./BaseTest.sol";
 import {Parameters} from "../src/Parameters.sol";
 import {IDNft} from "../src/interfaces/IDNft.sol";
-import {IPermissionManager as IP} from "../src/interfaces/IPermissionManager.sol";
 import {SharesMath} from "../src/libraries/SharesMath.sol";
 
 contract DNftsTest is BaseTest {
@@ -63,7 +62,6 @@ contract DNftsTest is BaseTest {
     uint id = dNft._mint(address(1));
 
     assertEq(dNft.insiderMints(), 1);
-    assertTrue(dNft.id2Locked(id));
     assertEq(dNft.id2Shares(id), 0);
   }
   function testCannot__MintOnlyOwner() public {
@@ -84,12 +82,12 @@ contract DNftsTest is BaseTest {
 
     assertEq(dNft.totalSupply(), dNft.INSIDER_MINTS());
   }
-  // -------------------- deposit --------------------
+  // -------------------- depositEth --------------------
   function test_Deposit() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
     assertEq(dNft.id2Shares(id), 5000e18);
 
-    dNft.deposit{value: 5 ether}(id);
+    dNft.depositEth{value: 5 ether}(id);
     assertEq(dNft.id2Shares(id), 10000e18);
   }
   function testFuzz_Deposit(uint eth) public {
@@ -97,7 +95,7 @@ contract DNftsTest is BaseTest {
     vm.assume(eth <= address(msg.sender).balance);
 
     uint id = dNft.mint{value: 5 ether}(address(this));
-    dNft.deposit{value: eth}(id);
+    dNft.depositEth{value: eth}(id);
   }
 
   // -------------------- move --------------------
@@ -128,7 +126,7 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(1));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingPermission.selector));
     dNft.move(id1, id2, 1000e18);
   }
   function testCannot_MoveExceedsBalance() public {
@@ -202,16 +200,9 @@ contract DNftsTest is BaseTest {
     assertEq(dyad.balanceOf(address(1)), 2000e18);
     assertEq(dyad.totalSupply(), 2000e18);
   }
-  function testCannot_WithdrawIsLocked() public {
-    vm.prank(MAINNET_OWNER);
-    uint id = dNft._mint(address(this));
-
-    vm.expectRevert(abi.encodeWithSelector(IDNft.Locked.selector));
-    dNft.withdraw(id, address(1), 1000e18);
-  }
   function testCannot_WithdrawIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingPermission.selector));
     dNft.withdraw(id, address(1), 1000e18);
   }
   function testCannot_WithdrawCrTooLow() public {
@@ -270,13 +261,6 @@ contract DNftsTest is BaseTest {
     assertEq(dNft.id2Shares(id), 0);
     assertEq(address(1).balance, eth);
   }
-  function testCannot_RedeemDepositIsLocked() public {
-    vm.prank(MAINNET_OWNER);
-    uint id = dNft._mint(address(this));
-
-    vm.expectRevert(abi.encodeWithSelector(IDNft.Locked.selector));
-    dNft.redeemDeposit(id, address(this), 1000e18);
-  }
   function testCannot_RedeemExceedsDeposit() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
 
@@ -285,7 +269,7 @@ contract DNftsTest is BaseTest {
   }
   function testCannot_RedeemDepositIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.MissingPermission.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingPermission.selector));
     dNft.redeemDeposit(id, address(this), 1000e18);
   }
 
@@ -294,7 +278,7 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    dNft.deposit{value: 100000 ether}(id1);
+    dNft.depositEth{value: 100000 ether}(id1);
 
     dNft.liquidate{value: 500000 ether}(id2, address(1));
 
@@ -310,103 +294,45 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    dNft.deposit{value: 10000 ether}(id1);
+    dNft.depositEth{value: 10000 ether}(id1);
 
     vm.expectRevert(abi.encodeWithSelector(IDNft.MissingShares.selector));
     dNft.liquidate{value: 1 ether}(id2, address(1));
   }
   function testCannot_LiquidateNonExistentId() public {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
-    dNft.deposit{value: 100000 ether}(id1);
+    dNft.depositEth{value: 100000 ether}(id1);
 
     vm.expectRevert("ERC721: invalid token ID");
     dNft.liquidate{value: 500000 ether}(3, address(1));
   }
-  function testCannot_LiquidateLockedNft() public {
-    uint id1 = dNft.mint{value: 5 ether}(address(this));
-    dNft.deposit{value: 100000 ether}(id1);
-
-    vm.prank(MAINNET_OWNER);
-    uint id2 = dNft._mint(address(1));
-
-    vm.expectRevert(abi.encodeWithSelector(IDNft.Locked.selector));
-    dNft.liquidate{value: 500000 ether}(id2, address(1));
-  }
 
   // -------------------- grant --------------------
-  function test_GrantAddPermission() public {
+  function test_GrantPermission() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
-
-    IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.MOVE;
-
-    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
-
-    // can not give permission in the same block as it was minted in
-    vm.roll(block.number + 1);
-    dNft.grant(id, ps);
-
-    assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.WITHDRAW));
-  }
-  function test_GrantRevokePermission() public {
-    uint id = dNft.mint{value: 5 ether}(address(this));
-
-    IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.MOVE;
-
-    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    // can not give permission in the same block as it was minted in
-    vm.roll(block.number + 1);
-    dNft.grant(id, ps);
-
-    assertTrue(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
-
-    pp = new IP.Permission[](0);
-    ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    dNft.grant(id, ps);
-
-    assertFalse(dNft.hasPermission(id, address(1), IP.Permission.MOVE));
+    dNft.grant(id, address(1));
+    (bool hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertTrue(hasPermission);
   }
   function testCannot_GrantIsNotOwner() public {
     uint id = dNft.mint{value: 5 ether}(address(1));
-    IP.Permission[] memory pp = new IP.Permission[](1);
-    pp[0] = IP.Permission.MOVE;
-    IP.OperatorPermission[] memory ps = new IP.OperatorPermission[](1);
-    ps[0] = IP.OperatorPermission({ operator: address(1), permissions: pp });
-
-    vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
-    dNft.grant(id, ps);
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotOwner.selector));
+    dNft.grant(id, address(1));
   }
 
-  // -------------------- unlock --------------------
-  function test_Unlock() public {
-    vm.prank(MAINNET_OWNER);
-    uint id = dNft._mint(address(this));
-    dNft.unlock(id);
+  // -------------------- revoke --------------------
+  function test_RevokePermission() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    dNft.grant(id, address(1));
+    (bool hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertTrue(hasPermission);
+    dNft.revoke(id, address(1));
+    (hasPermission, ) = dNft.id2Permission(id, address(1));
+    assertFalse(hasPermission);
   }
-  function testCannot_UnlockIsNotOwner() public {
-    vm.prank(MAINNET_OWNER);
-    uint id = dNft._mint(address(this));
-
-    vm.prank(address(1));
-    vm.expectRevert(abi.encodeWithSelector(IP.NotOwner.selector));
-    dNft.unlock(id);
-  }
-  function testCannot_UnlockIsAlreadyUnlocked() public {
-    vm.prank(MAINNET_OWNER);
-    uint id = dNft._mint(address(this));
-
-    dNft.unlock(id);
-    vm.expectRevert(abi.encodeWithSelector(IDNft.NotLocked.selector));
-    dNft.unlock(id);
+  function testCannot_RevokeIsNotOwner() public {
+    uint id = dNft.mint{value: 5 ether}(address(1));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.NotOwner.selector));
+    dNft.revoke(id, address(1));
   }
 }
