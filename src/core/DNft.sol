@@ -10,9 +10,8 @@ import {Owned} from "@solmate/src/auth/Owned.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {IDNft} from "../interfaces/IDNft.sol";
 import {Dyad} from "./Dyad.sol";
-import {PermissionManager} from "./PermissionManager.sol";
 
-contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
+contract DNft is ERC721Enumerable, Owned, IDNft {
   using SafeTransferLib   for address;
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
@@ -30,7 +29,14 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
 
+  struct Permission {
+    bool    hasPermission; 
+    uint248 lastUpdated;
+  }
+
   mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
+  mapping(uint => uint) public id2LastOwnershipChange; // id => blockNumber
+  mapping(uint => mapping (address => Permission)) public id2Permission; // id => (operator => Permission)
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -38,12 +44,8 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   modifier isNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
-  modifier isNftOwnerOrHasPermission(uint id, Permission permission) {
-    if (
-      ownerOf(id) != msg.sender && 
-      !hasPermission(id, msg.sender, permission)
-    ) revert MissingPermission(); 
-    _;
+  modifier isNftOwnerOrHasPermission(uint id) {
+    if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
   modifier isValidNft(uint id) {
     if (id >= totalSupply()) revert InvalidNft(); _;
@@ -114,7 +116,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function move(uint from, uint to, uint shares) 
     external 
-      isNftOwnerOrHasPermission(from, Permission.MOVE) 
+      isNftOwnerOrHasPermission(from) 
       isValidNft(to)
     {
       id2Shares[from] -= shares;
@@ -142,7 +144,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount)
     external 
-      isNftOwnerOrHasPermission(from, Permission.WITHDRAW)
+      isNftOwnerOrHasPermission(from)
     {
       _subDeposit(from, amount); 
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
@@ -163,7 +165,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function redeemDeposit(uint from, address to, uint amount)
     external 
-      isNftOwnerOrHasPermission(from, Permission.REDEEM)
+      isNftOwnerOrHasPermission(from)
     returns (uint) { 
       _subDeposit(from, amount); 
       return _redeem(to, amount);
@@ -194,11 +196,34 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   }
 
   /// @inheritdoc IDNft
-  function grant(uint id, OperatorPermission[] calldata operatorPermissions) 
+  function grant(uint id, address operator) 
     external 
       isNftOwner(id) 
     {
-      _grant(id, operatorPermissions);
+      id2Permission[id][operator] = Permission(true, uint248(block.number));
+      emit Granted(id, operator);
+  }
+
+  /// @inheritdoc IDNft
+  function revoke(uint id, address operator) 
+    external 
+      isNftOwner(id) 
+    {
+      delete id2Permission[id][operator];
+      emit Revoked(id, operator);
+  }
+
+  function hasPermission(uint id, address operator) 
+    public 
+    view 
+    returns (bool) {
+      return (
+        ownerOf(id) == operator || 
+        (
+          id2Permission[id][operator].hasPermission && 
+          id2Permission[id][operator].lastUpdated > id2LastOwnershipChange[id]
+        )
+      );
   }
 
   function _addDeposit(uint id, uint amount)
