@@ -243,6 +243,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     view 
     returns (uint) {
+      // cr = deposit / withdrawn
       return _shares2Deposit(id2Shares[id]).divWadDown(id2Withdrawn[id]);
   }
 
