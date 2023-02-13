@@ -296,7 +296,7 @@ contract DNftsTest is BaseTest {
 
     dNft.depositEth{value: 10000 ether}(id1);
 
-    vm.expectRevert(abi.encodeWithSelector(IDNft.MissingShares.selector));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.CrTooLow.selector));
     dNft.liquidate{value: 1 ether}(id2, address(1));
   }
   function testCannot_LiquidateNonExistentId() public {

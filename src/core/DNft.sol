@@ -159,9 +159,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwnerOrHasPermission(from)
     {
       _subDeposit(from, amount); 
-      uint collatVault    = address(this).balance * _getEthPrice()/1e8;
-      uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
-      if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
       id2Withdrawn[from] += amount;
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
@@ -183,6 +181,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwnerOrHasPermission(from)
     returns (uint) { 
       _subDeposit(from, amount); 
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
       return _redeem(to, amount);
   }
 
@@ -200,15 +199,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function liquidate(uint id, address to) 
     external 
     payable {
-      uint shares      = id2Shares[id];
-      uint deposit     = _shares2Deposit(shares);
-      uint withdrawn   = id2Withdrawn[id];
-      uint collatRatio = deposit.divWadDown(withdrawn);
-      if (collatRatio >= MIN_COLLATERIZATION_RATIO)  revert NotLiquidatable(); 
-      uint newShares  = _addDeposit(id, _eth2dyad(msg.value)); 
-      uint newDeposit = deposit + _shares2Deposit(newShares);
-      collatRatio     = newDeposit.divWadDown(withdrawn);
-      if (collatRatio < MIN_COLLATERIZATION_RATIO) { revert MissingShares(); }
+      if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
+      _addDeposit(id, _eth2dyad(msg.value)); 
+      if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       address owner = ownerOf(id);
       _transfer(owner, to, id);
       emit Liquidated(owner, to, id); 
@@ -243,6 +236,14 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
           id2Permission[id][operator].lastUpdated > id2LastOwnershipChange[id]
         )
       );
+  }
+
+  // Get Collateralization Ratio of the dNFT
+  function _collatRatio(uint id) 
+    private 
+    view 
+    returns (uint) {
+      return _shares2Deposit(id2Shares[id]).divWadDown(id2Withdrawn[id]);
   }
 
   function _addDeposit(uint id, uint amount)

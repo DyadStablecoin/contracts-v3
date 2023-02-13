@@ -16,10 +16,10 @@ interface IDNft {
   error SamePrice           ();
   error DepositTooLow       ();
   error NotLiquidatable     ();
-  error MissingShares       ();
   error MissingPermission   ();
   error NotOwner            ();
   error CrTooLow            ();
+  error CrTooHigh           ();
   error ZeroShares          ();
   error ZeroDeposit         ();
   error InvalidNft          ();
