@@ -34,8 +34,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     uint248 lastUpdated;
   }
 
-  mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
-  mapping(uint => uint) public id2Withdrawn; // Withdrawn DYAD per dNFT
+  mapping(uint => uint) public id2Shares;              // dNFT deposit is stored in shares
+  mapping(uint => uint) public id2Withdrawn;           // Withdrawn DYAD per dNFT
   mapping(uint => uint) public id2LastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2Permission; // id => (operator => Permission)
 
@@ -120,6 +120,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isValidNft(id)
     returns (uint) 
   {
+    id2Withdrawn[id] -= amount;
     dyad.burn(msg.sender, amount);
     return _addDeposit(id, amount);
   }
@@ -166,18 +167,12 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit Withdrawn(from, to, amount);
   }
 
+  /// @inheritdoc IDNft
   function redeemDyad(uint from, address to, uint amount)
     external 
-      isNftOwner(from)
+      isNftOwnerOrHasPermission(from)
     returns (uint) { 
       id2Withdrawn[from] -= amount;
-      return redeemDyad(to, amount);
-  }
-
-  /// @inheritdoc IDNft
-  function redeemDyad(address to, uint amount)
-    public 
-    returns (uint) { 
       dyad.burn(msg.sender, amount); 
       return _redeem(to, amount);
   }
@@ -287,7 +282,11 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     view 
     returns (uint) {
-      return shares.mulDivUp(totalDeposit, totalShares);
+      uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
+      if (_totalShares == 0) { return shares; }
+      uint deposit = shares.mulDivUp(totalDeposit, totalShares);
+      if (deposit == 0) { revert ZeroDeposit(); } // Check rounding down error 
+      return deposit;
   }
 
   // Return the value of ETH in DYAD

@@ -21,6 +21,7 @@ interface IDNft {
   error NotOwner            ();
   error CrTooLow            ();
   error ZeroShares          ();
+  error ZeroDeposit         ();
   error InvalidNft          ();
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
@@ -162,11 +163,12 @@ interface IDNft {
    *      - There is a re-entrancy risk while transfering the ETH, that is why the 
    *        `all state changes are done before the ETH transfer. I do not see why
    *        a `nonReentrant` modifier would be needed here, lets save the gas.
+   * @param from dNFT to redeem from
    * @param to Address to send the ETH to
    * @param amount Amount of DYAD to redeem
    * @return eth Amount of ETH redeemed for DYAD
    */
-  function redeemDyad(address to, uint amount) external returns (uint);
+  function redeemDyad(uint from, address to, uint amount) external returns (uint);
 
   /**
    * @notice Redeem `amount` of deposited DYAD for ETH
