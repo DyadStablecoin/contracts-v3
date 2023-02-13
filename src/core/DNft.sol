@@ -35,7 +35,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   }
 
   mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
-  mapping(uint => bool) public id2Locked; // Insider dNFT is locked after mint
   mapping(uint => uint) public id2LastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2Permission; // id => (operator => Permission)
 
@@ -50,9 +49,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   }
   modifier isValidNft(uint id) {
     if (id >= totalSupply()) revert InvalidNft(); _;
-  }
-  modifier isUnlocked(uint id) {
-    if (id2Locked[id]) revert Locked(); _;
   }
 
   constructor(
@@ -86,9 +82,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       onlyOwner
     returns (uint) {
       if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
-      uint id = _mintNft(to);
-      id2Locked[id] = true;
-      return id; 
+      return _mintNft(to); 
   }
 
   // Mint new DNft to `to`
@@ -96,7 +90,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     returns (uint) {
       uint id = totalSupply();
-      _mint(to, id);
+      _safeMint(to, id);
       emit Minted(to, id);
       return id;
   }
@@ -151,7 +145,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function withdraw(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
-      isUnlocked(from)
     {
       _subDeposit(from, amount); 
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
@@ -173,7 +166,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDeposit(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
-      isUnlocked(from)
     returns (uint) { 
       _subDeposit(from, amount); 
       return _redeem(to, amount);
@@ -192,7 +184,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
-      isUnlocked(id)
     payable {
       uint shares    = id2Shares[id];
       uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHOLD);
@@ -220,16 +211,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     {
       delete id2Permission[id][operator];
       emit Revoked(id, operator);
-  }
-
-  /// @inheritdoc IDNft
-  function unlock(uint id) 
-    external
-      isNftOwner(id)
-    {
-      if (!id2Locked[id]) revert NotLocked();
-      id2Locked[id] = false;
-      emit Unlocked(id);
   }
 
   function hasPermission(uint id, address operator) 

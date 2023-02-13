@@ -2,7 +2,6 @@
 pragma solidity = 0.8.17;
 
 interface IDNft {
-  event Unlocked  (uint indexed id);
   event Added     (uint indexed id, uint amount);
   event Removed   (uint indexed id, uint amount);
   event Minted    (address indexed to, uint indexed id);
@@ -21,8 +20,6 @@ interface IDNft {
   error MissingPermission   ();
   error NotOwner            ();
   error CrTooLow            ();
-  error Locked              ();
-  error NotLocked           ();
   error ZeroShares          ();
   error InvalidNft          ();
   error PublicMintsExceeded ();
@@ -229,15 +226,4 @@ interface IDNft {
    * @param operator Operator to revoke permissions from
    */
   function revoke(uint id, address operator) external;
-
-  /**
-   * @notice Unlock insider dNFT
-   * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT 
-   *      - dNFT is not locked
-   * @dev Emits:
-   *      - Unlocked(uint indexed id)
-   * @param id Id of the dNFT to unlock
-   */
-  function unlock(uint id) external;
 }
