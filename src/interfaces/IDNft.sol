@@ -4,7 +4,6 @@ pragma solidity = 0.8.17;
 import {IPermissionManager} from "./IPermissionManager.sol";
 
 interface IDNft is IPermissionManager {
-  event Unlocked  (uint indexed id);
   event Added     (uint indexed id, uint amount);
   event Removed   (uint indexed id, uint amount);
   event Minted    (address indexed to, uint indexed id);
@@ -19,8 +18,6 @@ interface IDNft is IPermissionManager {
   error NotLiquidatable     ();
   error MissingShares       ();
   error CrTooLow            ();
-  error Locked              ();
-  error NotLocked           ();
   error ZeroShares          ();
   error InvalidNft          ();
   error PublicMintsExceeded ();
@@ -216,15 +213,4 @@ interface IDNft is IPermissionManager {
    * @param operatorPermissions Permissions to grant and revoke for specific operators
    */
   function grant(uint id, OperatorPermission[] calldata operatorPermissions) external;
-
-  /**
-   * @notice Unlock insider dNFT
-   * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT 
-   *      - dNFT is not locked
-   * @dev Emits:
-   *      - Unlocked(uint indexed id)
-   * @param id Id of the dNFT to unlock
-   */
-  function unlock(uint id) external;
 }

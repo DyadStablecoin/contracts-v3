@@ -31,7 +31,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   uint public publicMints;  // Number of public mints
 
   mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
-  mapping(uint => bool) public id2Locked; // Insider dNFT is locked after mint
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -48,9 +47,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   }
   modifier isValidNft(uint id) {
     if (id >= totalSupply()) revert InvalidNft(); _;
-  }
-  modifier isUnlocked(uint id) {
-    if (id2Locked[id]) revert Locked(); _;
   }
 
   constructor(
@@ -84,9 +80,7 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       onlyOwner
     returns (uint) {
       if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
-      uint id = _mintNft(to);
-      id2Locked[id] = true;
-      return id; 
+      return _mintNft(to); 
   }
 
   // Mint new DNft to `to`
@@ -149,7 +143,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function withdraw(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from, Permission.WITHDRAW)
-      isUnlocked(from)
     {
       _subDeposit(from, amount); 
       uint collatVault    = address(this).balance * _getEthPrice()/1e8;
@@ -171,7 +164,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   function redeemDeposit(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from, Permission.REDEEM)
-      isUnlocked(from)
     returns (uint) { 
       _subDeposit(from, amount); 
       return _redeem(to, amount);
@@ -190,7 +182,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
   /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
-      isUnlocked(id)
     payable {
       uint shares    = id2Shares[id];
       uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHOLD);
@@ -208,16 +199,6 @@ contract DNft is ERC721Enumerable, PermissionManager, Owned, IDNft {
       isNftOwner(id) 
     {
       _grant(id, operatorPermissions);
-  }
-
-  /// @inheritdoc IDNft
-  function unlock(uint id) 
-    external
-      isNftOwner(id)
-    {
-      if (!id2Locked[id]) revert NotLocked();
-      id2Locked[id] = false;
-      emit Unlocked(id);
   }
 
   function _addDeposit(uint id, uint amount)
