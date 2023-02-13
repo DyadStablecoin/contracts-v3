@@ -82,12 +82,12 @@ contract DNftsTest is BaseTest {
 
     assertEq(dNft.totalSupply(), dNft.INSIDER_MINTS());
   }
-  // -------------------- deposit --------------------
+  // -------------------- depositEth --------------------
   function test_Deposit() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
     assertEq(dNft.id2Shares(id), 5000e18);
 
-    dNft.deposit{value: 5 ether}(id);
+    dNft.depositEth{value: 5 ether}(id);
     assertEq(dNft.id2Shares(id), 10000e18);
   }
   function testFuzz_Deposit(uint eth) public {
@@ -95,7 +95,7 @@ contract DNftsTest is BaseTest {
     vm.assume(eth <= address(msg.sender).balance);
 
     uint id = dNft.mint{value: 5 ether}(address(this));
-    dNft.deposit{value: eth}(id);
+    dNft.depositEth{value: eth}(id);
   }
 
   // -------------------- move --------------------
@@ -278,7 +278,7 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    dNft.deposit{value: 100000 ether}(id1);
+    dNft.depositEth{value: 100000 ether}(id1);
 
     dNft.liquidate{value: 500000 ether}(id2, address(1));
 
@@ -294,14 +294,14 @@ contract DNftsTest is BaseTest {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
     uint id2 = dNft.mint{value: 5 ether}(address(this));
 
-    dNft.deposit{value: 10000 ether}(id1);
+    dNft.depositEth{value: 10000 ether}(id1);
 
     vm.expectRevert(abi.encodeWithSelector(IDNft.MissingShares.selector));
     dNft.liquidate{value: 1 ether}(id2, address(1));
   }
   function testCannot_LiquidateNonExistentId() public {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
-    dNft.deposit{value: 100000 ether}(id1);
+    dNft.depositEth{value: 100000 ether}(id1);
 
     vm.expectRevert("ERC721: invalid token ID");
     dNft.liquidate{value: 500000 ether}(3, address(1));

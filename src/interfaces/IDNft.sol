@@ -75,9 +75,22 @@ interface IDNft {
    * @dev For Auditors:
    *      - To save gas it does not check if `msg.value` is zero 
    * @param id Id of the dNFT that gets the deposited DYAD
-   * @return amount Amount of DYAD deposited
+   * @return shares Shares of DYAD deposited
    */
-  function deposit(uint id) external payable returns (uint);
+  function depositEth(uint id) external payable returns (uint);
+
+  /**
+   * @notice Deposit DYAD for deposited DYAD
+   * @dev Will revert:
+   *      - If new deposit equals zero shares
+   *      - If `totalDeposit` equals 0
+   * @dev Emits:
+   *      - AddedShares(uint indexed id, uint amount)
+   * @param id Id of the dNFT that gets the deposited DYAD
+   * @param amount Amount of DYAD to deposit
+   * @return shares Shares of DYAD deposited
+   */
+  function depositDyad(uint id, uint amount) external returns (uint);
 
   /**
    * @notice Move `shares` `from` one dNFT `to` another dNFT
