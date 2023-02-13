@@ -71,7 +71,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
       uint id         = _mintNft(to); 
-      uint newDeposit = _deposit(id);
+      uint newDeposit = _depositEth(id);
       if (newDeposit < MIN_MINT_DYAD_DEPOSIT) revert DepositTooLow();
       return id;
   }
@@ -96,21 +96,31 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   }
 
   /// @inheritdoc IDNft
-  function deposit(uint id) 
+  function depositEth(uint id) 
     external 
     payable
       isValidNft(id)
     returns (uint) 
   {
-    return _deposit(id);
+    return _depositEth(id);
   }
 
-  function _deposit(uint id) 
+  function _depositEth(uint id) 
     private 
     returns (uint) {
       uint newDeposit = _eth2dyad(msg.value);
       _addDeposit(id, newDeposit);
       return newDeposit;
+  }
+
+  /// @inheritdoc IDNft
+  function depositDyad(uint id, uint amount) 
+    external 
+      isValidNft(id)
+    returns (uint) 
+  {
+    dyad.burn(msg.sender, amount);
+    return _addDeposit(id, amount);
   }
 
   /// @inheritdoc IDNft
