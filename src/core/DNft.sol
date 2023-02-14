@@ -36,6 +36,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
 
   mapping(uint => uint) public id2shares;              // dNFT deposit in shares
   mapping(uint => uint) public id2withdrawn;           // Withdrawn DYAD per dNFT
+  mapping(uint => uint) public id2lastDeposit;         // id => blockNumber
   mapping(uint => uint) public id2lastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2permission; // id => (operator => Permission)
 
@@ -115,7 +116,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function depositEth(uint id) 
     external 
-      isValidNft(id)
+      isNftOwnerOrHasPermission(id) 
       rebase
     payable
     returns (uint) 
@@ -132,7 +133,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function depositDyad(uint id, uint amount) 
     external 
-      isValidNft(id)
+      isNftOwnerOrHasPermission(id) 
       rebase
     returns (uint) {
       _burnDyad(id, amount);
@@ -156,9 +157,10 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwnerOrHasPermission(from)
       rebase
     {
+      if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       _subDeposit(from, amount); 
       id2withdrawn[from] += amount;
-      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
   }
@@ -170,7 +172,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       rebase
     returns (uint) { 
       _burnDyad(from, amount);
-      return _redeem(to, amount);
+      return _redeem(from, to, amount);
   }
 
   function _burnDyad(uint from, uint amount)
@@ -188,13 +190,14 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       _subDeposit(from, amount); 
       if (_shares2deposit(id2shares[from]) < MIN_DYAD_DEPOSIT) revert DepositTooLow();
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO)      revert CrTooLow(); 
-      return _redeem(to, amount);
+      return _redeem(from, to, amount);
   }
 
   // Redeem `amount` of DYAD to `to`
-  function _redeem(address to, uint amount)
+  function _redeem(uint from, address to, uint amount)
     private 
     returns (uint) { 
+      if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       uint eth = _dyad2eth(amount);
       emit Redeemed(msg.sender, amount, to, eth);
       to.safeTransferETH(eth); // re-entrancy 
@@ -259,6 +262,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function _addDeposit(uint id, uint amount)
     private
     returns (uint) {
+      id2lastDeposit[id] = block.number;
       uint shares    = _deposit2shares(amount);
       id2shares[id] += shares;
       totalShares   += shares;
