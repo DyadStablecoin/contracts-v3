@@ -36,6 +36,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
 
   mapping(uint => uint) public id2shares;              // dNFT deposit in shares
   mapping(uint => uint) public id2withdrawn;           // Withdrawn DYAD per dNFT
+  mapping(uint => uint) public id2lastDeposit;         // Withdrawn DYAD per dNFT
   mapping(uint => uint) public id2lastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2permission; // id => (operator => Permission)
 
@@ -156,6 +157,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwnerOrHasPermission(from)
       rebase
     {
+      if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       _subDeposit(from, amount); 
       id2withdrawn[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
@@ -259,6 +261,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function _addDeposit(uint id, uint amount)
     private
     returns (uint) {
+      id2lastDeposit[id] = block.number;
       uint shares    = _deposit2shares(amount);
       id2shares[id] += shares;
       totalShares   += shares;
