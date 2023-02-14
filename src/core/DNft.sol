@@ -34,7 +34,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     uint248 lastUpdated;
   }
 
-  mapping(uint => uint) public id2Shares; // dNFT deposit is stored in shares
+  mapping(uint => uint) public id2Shares;              // dNFT deposit is stored in shares
+  mapping(uint => uint) public id2Withdrawn;           // Withdrawn DYAD per dNFT
   mapping(uint => uint) public id2LastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2Permission; // id => (operator => Permission)
 
@@ -119,6 +120,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isValidNft(id)
     returns (uint) 
   {
+    id2Withdrawn[id] -= amount;
     dyad.burn(msg.sender, amount);
     return _addDeposit(id, amount);
   }
@@ -157,17 +159,18 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwnerOrHasPermission(from)
     {
       _subDeposit(from, amount); 
-      uint collatVault    = address(this).balance * _getEthPrice()/1e8;
-      uint newCollatRatio = collatVault.divWadDown(dyad.totalSupply() + amount);
-      if (newCollatRatio < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      id2Withdrawn[from] += amount;
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
   }
 
   /// @inheritdoc IDNft
-  function redeemDyad(address to, uint amount)
+  function redeemDyad(uint from, address to, uint amount)
     external 
+      isNftOwnerOrHasPermission(from)
     returns (uint) { 
+      id2Withdrawn[from] -= amount;
       dyad.burn(msg.sender, amount); 
       return _redeem(to, amount);
   }
@@ -178,6 +181,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNftOwnerOrHasPermission(from)
     returns (uint) { 
       _subDeposit(from, amount); 
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
       return _redeem(to, amount);
   }
 
@@ -195,11 +199,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function liquidate(uint id, address to) 
     external 
     payable {
-      uint shares    = id2Shares[id];
-      uint threshold = totalShares.mulWadDown(LIQUIDATION_THRESHOLD);
-      if (shares > threshold) { revert NotLiquidatable(); }
-      uint newShares  = _addDeposit(id, _eth2dyad(msg.value)); 
-      if (shares + newShares <= threshold) { revert MissingShares(); }
+      if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
+      _addDeposit(id, _eth2dyad(msg.value)); 
+      if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       address owner = ownerOf(id);
       _transfer(owner, to, id);
       emit Liquidated(owner, to, id); 
@@ -236,6 +238,17 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       );
   }
 
+  // Get Collateralization Ratio of the dNFT
+  function _collatRatio(uint id) 
+    private 
+    view 
+    returns (uint) {
+      uint withdrawn = id2Withdrawn[id]; // save gas
+      if (withdrawn == 0) return type(uint).max;
+      // cr = deposit / withdrawn
+      return _shares2Deposit(id2Shares[id]).divWadDown(withdrawn);
+  }
+
   function _addDeposit(uint id, uint amount)
     private
     returns (uint) {
@@ -266,6 +279,18 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       uint shares = amount.mulDivDown(_totalShares, totalDeposit);
       if (shares == 0) { revert ZeroShares(); } // Check rounding down error 
       return shares;
+  }
+
+  // Convert `amount` of deposit to the shares it represents
+  function _shares2Deposit(uint shares) 
+    private 
+    view 
+    returns (uint) {
+      uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
+      if (_totalShares == 0) { return shares; }
+      uint deposit = shares.mulDivUp(totalDeposit, totalShares);
+      if (deposit == 0) { revert ZeroDeposit(); } // Check rounding down error 
+      return deposit;
   }
 
   // Return the value of ETH in DYAD
