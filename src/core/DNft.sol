@@ -126,7 +126,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function _depositEth(uint id) 
     private 
     returns (uint) {
-      return _addDeposit(id, _eth2dyad(msg.value));
+      uint newDeposit = _eth2dyad(msg.value);
+      _addDeposit(id, newDeposit);
+      return newDeposit;
   }
 
   /// @inheritdoc IDNft
