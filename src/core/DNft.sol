@@ -160,7 +160,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       _subDeposit(from, amount); 
       id2withdrawn[from] += amount;
-      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
   }

@@ -27,6 +27,7 @@ interface IDNft {
   error InsiderMintsExceeded();
   error IncompleteRound     ();
   error StaleData           ();
+  error TooEarly            ();
 
   /**
    * @notice Mint a new dNFT to `to`
