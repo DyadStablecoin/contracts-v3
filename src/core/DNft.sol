@@ -76,7 +76,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       dyad                  = Dyad(_dyad);
       oracle                = IAggregatorV3(_oracle);
       MIN_MINT_DYAD_DEPOSIT = _minMintDyadDeposit;
-      MIN_DYAD_DEPOSIT      = MIN_MINT_DYAD_DEPOSIT.mulWadDown(0.1e18);
+      MIN_DYAD_DEPOSIT      = _minMintDyadDeposit.mulWadDown(0.1e18);
       ethPrice              = _getEthPrice();
   }
 
