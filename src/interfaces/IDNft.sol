@@ -112,18 +112,6 @@ interface IDNft {
   function move(uint from, uint to, uint shares) external;
 
   /**
-   * @notice Rebase DYAD total supply to reflect the latest price changes
-   * @dev Will revert:
-   *      - If the new ETH price has not changed from the last rebase ETH price
-   * @dev Emits:
-   *      - Rebased(uint supplyDelta)
-   * @dev For Auditors:
-   *      - The chainlink update threshold is currently set to 50 bps
-   * @return supplyDelta Amount of added/removed supply of deposited DYAD
-   */
-  function rebase() external returns (uint);
-
-  /**
    * @notice Withdraw `amount` of deposited DYAD as an ERC-20 token from dNFT
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT AND does not have the
