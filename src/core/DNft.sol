@@ -172,7 +172,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       rebase
     returns (uint) { 
       _burnDyad(from, amount);
-      return _redeem(to, amount);
+      return _redeem(from, to, amount);
   }
 
   function _burnDyad(uint from, uint amount)
@@ -190,11 +190,11 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       _subDeposit(from, amount); 
       if (_shares2deposit(id2shares[from]) < MIN_DYAD_DEPOSIT) revert DepositTooLow();
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO)      revert CrTooLow(); 
-      return _redeem(to, amount);
+      return _redeem(from, to, amount);
   }
 
   // Redeem `amount` of DYAD to `to`
-  function _redeem(address to, uint amount)
+  function _redeem(uint from, address to, uint amount)
     private 
     returns (uint) { 
       if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
