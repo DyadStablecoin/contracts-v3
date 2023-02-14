@@ -116,7 +116,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function depositEth(uint id) 
     external 
-      isValidNft(id)
+      isNftOwnerOrHasPermission(id) 
       rebase
     payable
     returns (uint) 
@@ -133,7 +133,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function depositDyad(uint id, uint amount) 
     external 
-      isValidNft(id)
+      isNftOwnerOrHasPermission(id) 
       rebase
     returns (uint) {
       _burnDyad(id, amount);
