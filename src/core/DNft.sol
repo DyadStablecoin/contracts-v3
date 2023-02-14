@@ -18,9 +18,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
 
   uint public constant  INSIDER_MINTS             = 300; 
   uint public constant  PUBLIC_MINTS              = 1700; 
-  uint public constant  MIN_COLLATERIZATION_RATIO = 3e18;     // 300%
-  uint public constant  LIQUIDATION_THRESHOLD     = 0.001e18; // 0.1%
+  uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 300%
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
+  uint public immutable MIN_DYAD_DEPOSIT;
 
   uint public ethPrice;     // ETH price from the last `rebase`
   uint public totalDeposit; // Sum of all deposits
@@ -76,6 +76,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       dyad                  = Dyad(_dyad);
       oracle                = IAggregatorV3(_oracle);
       MIN_MINT_DYAD_DEPOSIT = _minMintDyadDeposit;
+      MIN_DYAD_DEPOSIT      = MIN_MINT_DYAD_DEPOSIT.mulWadDown(0.1e18);
       ethPrice              = _getEthPrice();
   }
 
@@ -184,7 +185,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       rebase
     returns (uint) { 
       _subDeposit(from, amount); 
-      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
+      if (_shares2Deposit(id2Shares[from]) < MIN_DYAD_DEPOSIT) revert DepositTooLow();
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO)      revert CrTooLow(); 
       return _redeem(to, amount);
   }
 
