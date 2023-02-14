@@ -51,6 +51,20 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   modifier isValidNft(uint id) {
     if (id >= totalSupply()) revert InvalidNft(); _;
   }
+  modifier rebase() { // Rebase DYAD total supply to reflect the latest price changes
+    uint newEthPrice = _getEthPrice();
+    if (newEthPrice != ethPrice) {
+      bool rebaseUp    = newEthPrice > ethPrice;
+      uint priceChange = rebaseUp ? (newEthPrice - ethPrice).divWadDown(ethPrice)
+                                  : (ethPrice - newEthPrice).divWadDown(ethPrice);
+      uint supplyDelta = (dyad.totalSupply()+totalDeposit).mulWadDown(priceChange);
+      rebaseUp ? totalDeposit += supplyDelta
+               : totalDeposit -= supplyDelta;
+      ethPrice = newEthPrice; 
+      emit Rebased(supplyDelta);
+    }
+    _;
+  }
 
   constructor(
       address _dyad,
@@ -68,6 +82,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function mint(address to)
     external 
+      rebase
     payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
@@ -99,8 +114,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function depositEth(uint id) 
     external 
-    payable
       isValidNft(id)
+      rebase
+    payable
     returns (uint) 
   {
     return _depositEth(id);
@@ -118,6 +134,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function depositDyad(uint id, uint amount) 
     external 
       isValidNft(id)
+      rebase
     returns (uint) 
   {
     id2Withdrawn[id] -= amount;
@@ -136,27 +153,11 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit Moved(from, to, shares);
   }
 
-  // Rebase DYAD total supply to reflect the latest price changes
-  function _rebase() 
-    private 
-    returns (uint) {
-      uint newEthPrice = _getEthPrice();
-      if (newEthPrice == ethPrice) return 0;
-      bool rebaseUp    = newEthPrice > ethPrice;
-      uint priceChange = rebaseUp ? (newEthPrice - ethPrice).divWadDown(ethPrice)
-                                  : (ethPrice - newEthPrice).divWadDown(ethPrice);
-      uint supplyDelta = (dyad.totalSupply()+totalDeposit).mulWadDown(priceChange);
-      rebaseUp ? totalDeposit += supplyDelta
-               : totalDeposit -= supplyDelta;
-      ethPrice = newEthPrice; 
-      emit Rebased(supplyDelta);
-      return supplyDelta;
-  }
-
   /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
+      rebase
     {
       _subDeposit(from, amount); 
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
@@ -169,6 +170,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDyad(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
+      rebase
     returns (uint) { 
       id2Withdrawn[from] -= amount;
       dyad.burn(msg.sender, amount); 
@@ -179,6 +181,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDeposit(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
+      rebase
     returns (uint) { 
       _subDeposit(from, amount); 
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
@@ -198,11 +201,12 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
+      rebase
     payable {
       if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
       _addDeposit(id, _eth2dyad(msg.value)); 
       if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
-      address owner = ownerOf(id);
+      address owner = ownerOf(id); // save gas
       _transfer(owner, to, id);
       emit Liquidated(owner, to, id); 
   }
@@ -272,8 +276,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   // Convert `amount` of deposit to the shares it represents
   function _deposit2Shares(uint amount) 
     private 
+    view
     returns (uint) {
-      _rebase();
       uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
       if (_totalShares == 0) { return amount; }
       uint shares = amount.mulDivDown(_totalShares, totalDeposit);
