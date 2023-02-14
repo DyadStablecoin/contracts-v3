@@ -66,7 +66,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     _;
   }
 
-
   constructor(
       address _dyad,
       address _oracle, 
