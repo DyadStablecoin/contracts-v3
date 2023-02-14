@@ -36,7 +36,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
 
   mapping(uint => uint) public id2shares;              // dNFT deposit in shares
   mapping(uint => uint) public id2withdrawn;           // Withdrawn DYAD per dNFT
-  mapping(uint => uint) public id2lastDeposit;         // Withdrawn DYAD per dNFT
+  mapping(uint => uint) public id2lastDeposit;         // id => blockNumber
   mapping(uint => uint) public id2lastOwnershipChange; // id => blockNumber
   mapping(uint => mapping (address => Permission)) public id2permission; // id => (operator => Permission)
 
