@@ -87,9 +87,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
-      uint id         = _mintNft(to); 
-      uint newDeposit = _depositEth(id);
-      if (newDeposit < MIN_MINT_DYAD_DEPOSIT) revert DepositTooLow();
+      uint id     = _mintNft(to);
+      uint shares = _depositEth(id);
+      if (_shares2deposit(shares) < MIN_MINT_DYAD_DEPOSIT) revert DepositTooLow();
       return id;
   }
 
@@ -126,9 +126,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function _depositEth(uint id) 
     private 
     returns (uint) {
-      uint newDeposit = _eth2dyad(msg.value);
-      _addDeposit(id, newDeposit);
-      return newDeposit;
+      return _addDeposit(id, _eth2dyad(msg.value));
   }
 
   /// @inheritdoc IDNft
@@ -159,8 +157,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       rebase
     {
       _subDeposit(from, amount); 
-      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
       id2withdrawn[from] += amount;
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) { revert CrTooLow(); }
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
   }
@@ -176,8 +174,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   }
 
   function _burnDyad(uint from, uint amount)
-    private 
-    returns (uint) {
+    private {
       id2withdrawn[from] -= amount;
       dyad.burn(msg.sender, amount); 
   }
@@ -298,7 +295,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     returns (uint) {
       uint _totalShares = totalShares; // Saves one SLOAD if totalShares is non-zero
       if (_totalShares == 0) { return shares; }
-      uint deposit = shares.mulDivUp(totalDeposit, totalShares);
+      uint deposit = shares.mulDivDown(totalDeposit, totalShares);
       if (deposit == 0) { revert ZeroDeposit(); } // Check rounding down error 
       return deposit;
   }
