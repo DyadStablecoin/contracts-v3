@@ -197,6 +197,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function _redeem(address to, uint amount)
     private 
     returns (uint) { 
+      if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       uint eth = _dyad2eth(amount);
       emit Redeemed(msg.sender, amount, to, eth);
       to.safeTransferETH(eth); // re-entrancy 
