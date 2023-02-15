@@ -315,7 +315,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     view 
     returns (uint) {
-      return eth * _getEthPrice()/1e8; 
+      return eth * ethPrice/1e8; 
   }
 
   // Return the value of DYAD in ETH
@@ -323,7 +323,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     view 
     returns (uint) {
-      return _dyad*1e8 / _getEthPrice();
+      return _dyad*1e8 / ethPrice;
   }
 
   // ETH price in USD
