@@ -174,6 +174,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDyad(uint from, address to, uint amount)
     external 
       isValidNft(from)
+      isNotInTimeout(from)
       rebase()
     returns (uint) { 
       _burnDyad(from, amount);
@@ -190,6 +191,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDeposit(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
+      isNotInTimeout(from)
       rebase()
     returns (uint) { 
       _subDeposit(from, amount); 
@@ -201,7 +203,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   // Redeem `amount` of DYAD to `to`
   function _redeem(uint from, address to, uint amount)
     private 
-      isNotInTimeout(from)
     returns (uint) { 
       uint eth = _dyad2eth(amount);
       emit Redeemed(msg.sender, amount, to, eth);
