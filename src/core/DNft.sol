@@ -163,9 +163,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       isNotInTimeout(from)
       rebase()
     {
-      _subDeposit(from, amount); 
       id2withdrawn[from] += amount;
-      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
+      _subDeposit(from, amount); 
       dyad.mint(to, amount);
       emit Withdrawn(from, to, amount);
   }
@@ -195,8 +194,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       rebase()
     returns (uint) { 
       _subDeposit(from, amount); 
-      if (_shares2deposit(id2shares[from]) < MIN_DYAD_DEPOSIT) revert DepositTooLow();
-      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO)      revert CrTooLow(); 
       return _redeem(to, amount);
   }
 
@@ -283,6 +280,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       id2shares[id] -= shares;
       totalShares   -= shares;
       totalDeposit  -= amount;
+      if (_shares2deposit(id2shares[id]) < MIN_DYAD_DEPOSIT) revert DepositTooLow();
+      if (_collatRatio(id) < MIN_COLLATERIZATION_RATIO)      revert CrTooLow(); 
       emit Removed(id, shares);
   }
 
