@@ -19,6 +19,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   uint public constant  INSIDER_MINTS             = 300; 
   uint public constant  PUBLIC_MINTS              = 1700; 
   uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 300%
+  uint public constant  TIMEOUT_DURATION          = 10;   // Number of blocks
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
   uint public immutable MIN_DYAD_DEPOSIT;
 
@@ -52,6 +53,10 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   modifier isValidNft(uint id) {
     if (id >= totalSupply()) revert InvalidNft(); _;
   }
+  modifier isNotInTimeout(uint id) {
+    if (id2lastDeposit[id] + TIMEOUT_DURATION > block.number) revert InTimeout();
+    _;
+  }
   modifier rebase() { // Rebase DYAD total supply to reflect the latest price changes
     uint newEthPrice = _getEthPrice();
     if (newEthPrice != ethPrice) {
@@ -84,7 +89,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function mint(address to)
     external 
-      rebase
+      rebase()
     payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
@@ -117,7 +122,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function depositEth(uint id) 
     external 
       isNftOwnerOrHasPermission(id) 
-      rebase
+      rebase()
     payable
     returns (uint) 
   {
@@ -134,7 +139,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function depositDyad(uint id, uint amount) 
     external 
       isNftOwnerOrHasPermission(id) 
-      rebase
+      rebase()
     returns (uint) {
       _burnDyad(id, amount);
       return _addDeposit(id, amount);
@@ -155,9 +160,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function withdraw(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
-      rebase
+      isNotInTimeout(from)
+      rebase()
     {
-      if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       _subDeposit(from, amount); 
       id2withdrawn[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
@@ -169,7 +174,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDyad(uint from, address to, uint amount)
     external 
       isValidNft(from)
-      rebase
+      rebase()
     returns (uint) { 
       _burnDyad(from, amount);
       return _redeem(from, to, amount);
@@ -185,7 +190,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function redeemDeposit(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
-      rebase
+      rebase()
     returns (uint) { 
       _subDeposit(from, amount); 
       if (_shares2deposit(id2shares[from]) < MIN_DYAD_DEPOSIT) revert DepositTooLow();
@@ -196,8 +201,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   // Redeem `amount` of DYAD to `to`
   function _redeem(uint from, address to, uint amount)
     private 
+      isNotInTimeout(from)
     returns (uint) { 
-      if (id2lastDeposit[from] + 10 > block.number) revert TooEarly();
       uint eth = _dyad2eth(amount);
       emit Redeemed(msg.sender, amount, to, eth);
       to.safeTransferETH(eth); // re-entrancy 
@@ -207,7 +212,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
-      rebase
+      rebase()
     payable {
       if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
       _addDeposit(id, _eth2dyad(msg.value)); 
