@@ -19,7 +19,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   uint public constant  INSIDER_MINTS             = 300; 
   uint public constant  PUBLIC_MINTS              = 1700; 
   uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 300%
-  uint public constant  TIMEOUT_DURATION          = 10;   // Number of blocks
+  uint public constant  TIMEOUT                   = 1 hours;
   uint public immutable MIN_MINT_DYAD_DEPOSIT; // Min DYAD deposit to mint a DNft
   uint public immutable MIN_DYAD_DEPOSIT;
 
@@ -37,8 +37,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
 
   mapping(uint => uint) public id2shares;              // dNFT deposit in shares
   mapping(uint => uint) public id2withdrawn;           // dNFT DYAD withdrawals 
-  mapping(uint => uint) public id2lastDeposit;         // id => blockNumber
-  mapping(uint => uint) public id2lastOwnershipChange; // id => blockNumber
+  mapping(uint => uint) public id2lastDeposit;         // id => block.timestamp
+  mapping(uint => uint) public id2lastOwnershipChange; // id => block.number
   mapping(uint => mapping (address => Permission)) public id2permission; // id => (operator => Permission)
 
   Dyad          public dyad;
@@ -54,7 +54,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     if (id >= totalSupply()) revert InvalidNft(); _;
   }
   modifier isNotInTimeout(uint id) {
-    if (id2lastDeposit[id] + TIMEOUT_DURATION > block.number) revert InTimeout();
+    if (id2lastDeposit[id] + TIMEOUT > block.timestamp) revert InTimeout();
     _;
   }
   modifier rebase() { // Rebase DYAD total supply to reflect the latest price changes
@@ -268,7 +268,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function _addDeposit(uint id, uint amount)
     private
     returns (uint) {
-      id2lastDeposit[id] = block.number;
+      id2lastDeposit[id] = block.timestamp;
       uint shares    = _deposit2shares(amount);
       id2shares[id] += shares;
       totalShares   += shares;
