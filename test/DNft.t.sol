@@ -229,14 +229,12 @@ contract DNftsTest is BaseTest {
 
   // -------------------- liquidate --------------------
   function test_Liquidate() public {
-    uint id1 = dNft.mint{value: 5 ether}(address(this));
-    uint id2 = dNft.mint{value: 5 ether}(address(this));
-
-    dNft.depositEth{value: 100000 ether}(id1);
-
-    dNft.liquidate{value: 500000 ether}(id2, address(1));
-
-    assertEq(dNft.ownerOf(id2), address(1));
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    vm.warp(block.timestamp + dNft.TIMEOUT()); // to avoid the timeout
+    dNft.withdraw(id, address(this), 1200e18);
+    oracleMock.setPrice(950e8);
+    dNft.liquidate{value: 500000 ether}(id, address(1));
+    assertEq(dNft.ownerOf(id), address(1));
   }
   function testCannot_LiquidateUnderLiquidationThershold() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
