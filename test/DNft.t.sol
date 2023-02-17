@@ -236,26 +236,24 @@ contract DNftsTest is BaseTest {
     dNft.liquidate{value: 500000 ether}(id, address(1));
     assertEq(dNft.ownerOf(id), address(1));
   }
-  function testCannot_LiquidateUnderLiquidationThershold() public {
+  function testCannot_Liquidate_CrTooHigh() public {
     uint id = dNft.mint{value: 5 ether}(address(this));
-
-    vm.expectRevert(abi.encodeWithSelector(IDNft.NotLiquidatable.selector));
-    dNft.liquidate{value: 500000 ether}(id, address(1));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.CrTooHigh.selector));
+    dNft.liquidate(id, address(1));
   }
-  function testCannot_LiquidateMissingShares() public {
-    uint id1 = dNft.mint{value: 5 ether}(address(this));
-    uint id2 = dNft.mint{value: 5 ether}(address(this));
-
-    dNft.depositEth{value: 10000 ether}(id1);
-
+  function testCannot_Liquidate_CrTooLow() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    vm.warp(block.timestamp + dNft.TIMEOUT()); // to avoid the timeout
+    dNft.withdraw(id, address(this), 1200e18);
+    oracleMock.setPrice(950e8);
     vm.expectRevert(abi.encodeWithSelector(IDNft.CrTooLow.selector));
-    dNft.liquidate{value: 1 ether}(id2, address(1));
+    dNft.liquidate{value: 100}(id, address(1));
   }
   function testCannot_LiquidateNonExistentId() public {
     uint id1 = dNft.mint{value: 5 ether}(address(this));
     dNft.depositEth{value: 100000 ether}(id1);
 
-    vm.expectRevert("ERC721: invalid token ID");
+    vm.expectRevert(abi.encodeWithSelector(IDNft.CrTooHigh.selector));
     dNft.liquidate{value: 500000 ether}(3, address(1));
   }
 
