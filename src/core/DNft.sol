@@ -6,8 +6,8 @@ import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/ext
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {SafeTransferLib} from "@solmate/src/utils/SafeTransferLib.sol";
 import {Owned} from "@solmate/src/auth/Owned.sol";
-
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
+
 import {IDNft} from "../interfaces/IDNft.sol";
 import {Dyad} from "./Dyad.sol";
 
@@ -57,7 +57,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     if (id2lastDeposit[id] + TIMEOUT > block.timestamp) revert InTimeout();
     _;
   }
-  modifier rebase() { // Rebase DYAD total supply to reflect the latest price changes
+  modifier rebase() { // Rebase DYAD total supply to reflect price changes
     uint newEthPrice = _getEthPrice();
     if (newEthPrice != ethPrice) {
       bool rebaseUp    = newEthPrice > ethPrice;
