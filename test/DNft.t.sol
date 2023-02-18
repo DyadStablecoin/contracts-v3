@@ -136,6 +136,11 @@ contract DNftsTest is BaseTest {
     vm.expectRevert();
     dNft.move(id1, id2, 6000e18);
   }
+  function testCannot_MoveToInvalidNft() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    vm.expectRevert(abi.encodeWithSelector(IDNft.InvalidNft.selector));
+    dNft.move(id, 1000, 200);
+  }
 
   // -------------------- withdraw --------------------
   function test_Withdraw() public {
@@ -172,17 +177,16 @@ contract DNftsTest is BaseTest {
     dNft.withdraw(id, address(1), 6000e18);
   }
 
-  // // -------------------- redeemDyad --------------------
-  // function test_RedeemDyad() public {
-  //   uint id = dNft.mint{value: 5 ether}(address(this));
-  //   dNft.withdraw(id, address(this), 1000e18);
-  //   assertEq(dyad.balanceOf(address(this)), 1000e18);
-
-  //   dNft.redeemDyad(address(1), 1000e18);
-
-  //   assertEq(dyad.balanceOf(address(this)), 0);
-  //   assertEq(address(1).balance, 1e18);
-  // }
+  // -------------------- redeemDyad --------------------
+  function test_RedeemDyad() public {
+    uint id = dNft.mint{value: 5 ether}(address(this));
+    vm.warp(block.timestamp + dNft.TIMEOUT());
+    dNft.withdraw(id, address(this), 1000e18);
+    assertEq(dyad.balanceOf(address(this)), 1000e18);
+    dNft.redeemDyad(id, address(1), 1000e18);
+    assertEq(dyad.balanceOf(address(this)), 0);
+    assertEq(address(1).balance, 1e18);
+  }
   // function testCannot_RedeemDyadExceedsBalance() public {
   //   uint id = dNft.mint{value: 5 ether}(address(this));
   //   dNft.withdraw(id, address(this), 1000e18);
