@@ -2,8 +2,6 @@
 
 ![dyad](https://pbs.twimg.com/profile_images/1580864472079532032/uCLwW3nb_200x200.jpg)
 
-**Hard pegged**, **immutable** and **governance-free** stablecoin backed by ETH. Decentralized monetary policy via long vol dNFTs.
-
 ## Contracts
 
 ```ml
