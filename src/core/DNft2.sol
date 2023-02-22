@@ -46,8 +46,8 @@ contract DNft2 is ERC721Enumerable, Owned {
       address _owner
   ) ERC721("Dyad NFT", "dNFT") 
     Owned(_owner) {
-      dyad                  = Dyad(_dyad);
-      oracle                = IAggregatorV3(_oracle);
+      dyad   = Dyad(_dyad);
+      oracle = IAggregatorV3(_oracle);
   }
 
   function mintNft(address to)
@@ -123,6 +123,8 @@ contract DNft2 is ERC721Enumerable, Owned {
     external 
       isNftOwner(from)
     returns (uint) { 
+      dyad.burn(msg.sender, amount);
+      id2dyad[from] -= amount;
       uint eth = _dyad2eth(amount);
       to.safeTransferETH(eth); // re-entrancy 
       return eth;
