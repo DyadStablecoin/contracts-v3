@@ -1,19 +1,41 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
+import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {Owned} from "@solmate/src/auth/Owned.sol";
 
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {Dyad} from "./Dyad.sol";
 
 contract DNft2 is ERC721Enumerable, Owned {
+  using SafeCast          for int256;
+  using FixedPointMathLib for uint256;
+
   uint public constant  INSIDER_MINTS             = 300; 
   uint public constant  PUBLIC_MINTS              = 1700; 
   uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 300%
 
+  uint public insiderMints; // Number of insider mints
+  uint public publicMints;  // Number of public mints
+
+  mapping(uint => uint) public id2eth;
+  mapping(uint => uint) public id2dyad;
+
   Dyad          public dyad;
   IAggregatorV3 public oracle;
+
+  error NotOwner            ();
+  error StaleData           ();
+  error CrTooLow            ();
+  error IncompleteRound     ();
+  error PublicMintsExceeded ();
+  error InsiderMintsExceeded();
+
+  modifier isNftOwner(uint id) {
+    if (ownerOf(id) != msg.sender) revert NotOwner(); _;
+  }
 
   constructor(
       address _dyad,
@@ -23,5 +45,101 @@ contract DNft2 is ERC721Enumerable, Owned {
     Owned(_owner) {
       dyad                  = Dyad(_dyad);
       oracle                = IAggregatorV3(_oracle);
+  }
+
+  function mint(address to)
+    external 
+    payable 
+    returns (uint) {
+      if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
+      uint id = _mintNft(to);
+      return id;
+  }
+
+  function _mint(address to)
+    external 
+      onlyOwner
+    returns (uint) {
+      if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
+      return _mintNft(to); 
+  }
+
+  // Mint new DNft to `to`
+  function _mintNft(address to)
+    private 
+    returns (uint) {
+      uint id = totalSupply();
+      _safeMint(to, id);
+      return id;
+  }
+
+  function depositEth(uint id) 
+    external 
+      isNftOwner(id) 
+    payable
+  {
+    id2eth[id] += msg.value;
+  }
+
+  function depositDyad(uint id, uint amount) 
+    external 
+      isNftOwner(id) 
+    {
+      dyad.burn(msg.sender, amount); 
+      id2dyad[id] -= amount;
+      id2eth [id] += _dyad2eth(amount);
+  }
+
+  function withdraw(uint from, address to, uint amount)
+    external 
+      isNftOwner(from)
+    {
+      id2dyad[from] += amount;
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
+      dyad.mint(to, amount);
+  }
+
+  // Get Collateralization Ratio of the dNFT
+  function _collatRatio(uint id) 
+    private 
+    view 
+    returns (uint) {
+      uint _dyad = id2dyad[id]; // save gas
+      if (_dyad == 0) return type(uint).max;
+      // cr = deposit / withdrawn
+      return _dyad.divWadDown(_eth2dyad(id2eth[id]));
+  }
+
+  // Return the value of DYAD in ETH
+  function _dyad2eth(uint _dyad)
+    private 
+    view 
+    returns (uint) {
+      return _dyad*1e8 / _getEthPrice();
+  }
+
+  // Return the value of ETH in DYAD
+  function _eth2dyad(uint eth) 
+    private 
+    view 
+    returns (uint) {
+      return eth * _getEthPrice()/1e8; 
+  }
+
+  // ETH price in USD
+  function _getEthPrice() 
+    private 
+    view 
+    returns (uint) {
+      (
+        uint80 roundID,
+        int256 price,
+        , 
+        uint256 timeStamp, 
+        uint80 answeredInRound
+      ) = oracle.latestRoundData();
+      if (timeStamp == 0) revert IncompleteRound();
+      if (answeredInRound < roundID) revert StaleData();
+      return price.toUint256();
   }
 }
