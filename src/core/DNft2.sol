@@ -15,9 +15,9 @@ contract DNft2 is ERC721Enumerable, Owned {
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
 
-  uint public constant  INSIDER_MINTS             = 300; 
-  uint public constant  PUBLIC_MINTS              = 1700; 
-  uint public constant  MIN_COLLATERIZATION_RATIO = 3e18; // 300%
+  uint public constant INSIDER_MINTS             = 300; 
+  uint public constant PUBLIC_MINTS              = 1700; 
+  uint public constant MIN_COLLATERIZATION_RATIO = 3e18; // 300%
 
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
@@ -83,15 +83,6 @@ contract DNft2 is ERC721Enumerable, Owned {
     id2eth[id] += msg.value;
   }
 
-  function burnDyad(uint id, uint amount) 
-    external 
-      isNftOwner(id) 
-    {
-      dyad.burn(msg.sender, amount); 
-      id2dyad[id] -= amount;
-      id2eth [id] += _dyad2eth(amount);
-  }
-
   function withdraw(uint from, address to, uint amount) 
     external 
       isNftOwner(from) 
@@ -101,7 +92,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       to.safeTransferETH(amount); 
   }
 
-  function mintDyad(uint from, address to, uint amount)
+  function mint(uint from, address to, uint amount)
     external 
       isNftOwner(from)
     {
