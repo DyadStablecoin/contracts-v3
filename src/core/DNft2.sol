@@ -29,6 +29,7 @@ contract DNft2 is ERC721Enumerable, Owned {
   error NotOwner            ();
   error StaleData           ();
   error CrTooLow            ();
+  error CrTooHigh           ();
   error IncompleteRound     ();
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
@@ -97,6 +98,15 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2dyad[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       dyad.mint(to, amount);
+  }
+
+  function liquidate(uint id, address to) 
+    external 
+    payable {
+      if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
+      id2eth[id] += msg.value;
+      if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
+      _transfer(ownerOf(id), to, id);
   }
 
   // Get Collateralization Ratio of the dNFT
