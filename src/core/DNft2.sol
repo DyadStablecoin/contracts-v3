@@ -92,6 +92,15 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2eth [id] += _dyad2eth(amount);
   }
 
+  function removeEth(uint from, address to, uint amount) 
+    external 
+      isNftOwner(id) 
+    {
+      id2eth[from] -= amount;
+      if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
+      to.safeTransferETH(eth); 
+  }
+
   function mintDyad(uint from, address to, uint amount)
     external 
       isNftOwner(from)
