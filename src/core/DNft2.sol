@@ -3,6 +3,7 @@ pragma solidity =0.8.17;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {SafeTransferLib} from "@solmate/src/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {Owned} from "@solmate/src/auth/Owned.sol";
 
@@ -10,6 +11,7 @@ import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {Dyad} from "./Dyad.sol";
 
 contract DNft2 is ERC721Enumerable, Owned {
+  using SafeTransferLib   for address;
   using SafeCast          for int256;
   using FixedPointMathLib for uint256;
 
@@ -48,16 +50,15 @@ contract DNft2 is ERC721Enumerable, Owned {
       oracle                = IAggregatorV3(_oracle);
   }
 
-  function mint(address to)
+  function mintNft(address to)
     external 
     payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
-      uint id = _mintNft(to);
-      return id;
+      return _mintNft(to);
   }
 
-  function _mint(address to)
+  function mintInsiderNft(address to)
     external 
       onlyOwner
     returns (uint) {
@@ -74,7 +75,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       return id;
   }
 
-  function depositEth(uint id) 
+  function deposit(uint id) 
     external 
       isNftOwner(id) 
     payable
@@ -82,7 +83,7 @@ contract DNft2 is ERC721Enumerable, Owned {
     id2eth[id] += msg.value;
   }
 
-  function depositDyad(uint id, uint amount) 
+  function burnDyad(uint id, uint amount) 
     external 
       isNftOwner(id) 
     {
@@ -91,7 +92,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2eth [id] += _dyad2eth(amount);
   }
 
-  function withdraw(uint from, address to, uint amount)
+  function mintDyad(uint from, address to, uint amount)
     external 
       isNftOwner(from)
     {
@@ -107,6 +108,15 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2eth[id] += msg.value;
       if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       _transfer(ownerOf(id), to, id);
+  }
+
+  function redeem(uint from, address to, uint amount)
+    external 
+      isNftOwner(from)
+    returns (uint) { 
+      uint eth = _dyad2eth(amount);
+      to.safeTransferETH(eth); // re-entrancy 
+      return eth;
   }
 
   // Get Collateralization Ratio of the dNFT
