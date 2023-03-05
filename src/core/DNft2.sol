@@ -75,6 +75,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       return id;
   }
 
+  // Deposit ETH
   function deposit(uint id) 
     external 
     payable
@@ -82,6 +83,7 @@ contract DNft2 is ERC721Enumerable, Owned {
     id2eth[id] += msg.value;
   }
 
+  // Withdraw ETH
   function withdraw(uint from, address to, uint amount) 
     external 
       isNftOwner(from) 
@@ -91,6 +93,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       to.safeTransferETH(amount); 
   }
 
+  // Mint DYAD
   function mint(uint from, address to, uint amount)
     external 
       isNftOwner(from)
@@ -109,6 +112,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       _transfer(ownerOf(id), to, id);
   }
 
+  // Redeem DYAD for ETH
   function redeem(uint from, address to, uint amount)
     external 
       isNftOwner(from)
