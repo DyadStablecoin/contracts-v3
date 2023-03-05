@@ -77,7 +77,6 @@ contract DNft2 is ERC721Enumerable, Owned {
 
   function deposit(uint id) 
     external 
-      isNftOwner(id) 
     payable
   {
     id2eth[id] += msg.value;
@@ -117,6 +116,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       dyad.burn(msg.sender, amount);
       id2dyad[from] -= amount;
       uint eth = _dyad2eth(amount);
+      id2eth[from]  -= eth;
       to.safeTransferETH(eth); // re-entrancy 
       return eth;
   }
