@@ -52,7 +52,6 @@ contract DNft2 is ERC721Enumerable, Owned {
 
   function mintNft(address to)
     external 
-    payable 
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
       return _mintNft(to);
