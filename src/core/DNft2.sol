@@ -132,7 +132,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       uint _dyad = id2dyad[id]; // save gas
       if (_dyad == 0) return type(uint).max;
       // cr = deposit / withdrawn
-      return _dyad.divWadDown(id2eth[id] * _getEthPrice()/1e8);
+      return (id2eth[id] * _getEthPrice()/1e8).divWadDown(_dyad);
   }
 
   // ETH price in USD
