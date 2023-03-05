@@ -119,7 +119,7 @@ contract DNft2 is ERC721Enumerable, Owned {
     returns (uint) { 
       dyad.burn(msg.sender, amount);
       id2dyad[from] -= amount;
-      uint eth = _dyad2eth(amount);
+      uint eth       = amount*1e8 / _getEthPrice();
       id2eth[from]  -= eth;
       to.safeTransferETH(eth); // re-entrancy 
       return eth;
@@ -133,23 +133,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       uint _dyad = id2dyad[id]; // save gas
       if (_dyad == 0) return type(uint).max;
       // cr = deposit / withdrawn
-      return _dyad.divWadDown(_eth2dyad(id2eth[id]));
-  }
-
-  // Return the value of DYAD in ETH
-  function _dyad2eth(uint _dyad)
-    private 
-    view 
-    returns (uint) {
-      return _dyad*1e8 / _getEthPrice();
-  }
-
-  // Return the value of ETH in DYAD
-  function _eth2dyad(uint eth) 
-    private 
-    view 
-    returns (uint) {
-      return eth * _getEthPrice()/1e8; 
+      return _dyad.divWadDown(id2eth[id] * _getEthPrice()/1e8);
   }
 
   // ETH price in USD
