@@ -43,7 +43,7 @@ contract DNft2 is ERC721Enumerable, Owned {
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
 
-  modifier isNftOwner(uint id) {
+  modifier onlyNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
 
@@ -94,7 +94,7 @@ contract DNft2 is ERC721Enumerable, Owned {
   // Withdraw ETH
   function withdraw(uint from, address to, uint amount) 
     external 
-      isNftOwner(from) 
+      onlyNftOwner(from) 
     {
       id2eth[from] -= amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
@@ -105,7 +105,7 @@ contract DNft2 is ERC721Enumerable, Owned {
   // Mint DYAD
   function mintDyad(uint from, address to, uint amount)
     external 
-      isNftOwner(from)
+      onlyNftOwner(from)
     {
       id2dyad[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
@@ -126,7 +126,7 @@ contract DNft2 is ERC721Enumerable, Owned {
   // Redeem DYAD for ETH
   function redeem(uint from, address to, uint amount)
     external 
-      isNftOwner(from)
+      onlyNftOwner(from)
     returns (uint) { 
       dyad.burn(msg.sender, amount);
       id2dyad[from] -= amount;
