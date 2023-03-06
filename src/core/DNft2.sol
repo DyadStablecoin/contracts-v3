@@ -28,6 +28,13 @@ contract DNft2 is ERC721Enumerable, Owned {
   Dyad          public dyad;
   IAggregatorV3 public oracle;
 
+  event MintNft  (uint indexed id, address indexed to);
+  event Liquidate(uint indexed id, address indexed to);
+  event Deposit  (uint indexed id, uint amount);
+  event Withdraw (uint indexed from, address indexed to, uint amount);
+  event Mint     (uint indexed from, address indexed to, uint amount);
+  event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
+
   error NotOwner            ();
   error StaleData           ();
   error CrTooLow            ();
@@ -71,6 +78,7 @@ contract DNft2 is ERC721Enumerable, Owned {
     returns (uint) {
       uint id = totalSupply();
       _safeMint(to, id);
+      emit MintNft(id, to);
       return id;
   }
 
@@ -80,6 +88,7 @@ contract DNft2 is ERC721Enumerable, Owned {
     payable
   {
     id2eth[id] += msg.value;
+    emit Deposit(id, msg.value);
   }
 
   // Withdraw ETH
@@ -90,6 +99,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2eth[from] -= amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       to.safeTransferETH(amount); 
+      emit Withdraw(from, to, amount);
   }
 
   // Mint DYAD
@@ -100,6 +110,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2dyad[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       dyad.mint(to, amount);
+      emit Mint(from, to, amount);
   }
 
   function liquidate(uint id, address to) 
@@ -109,6 +120,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2eth[id] += msg.value;
       if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       _transfer(ownerOf(id), to, id);
+      emit Liquidate(id, to);
   }
 
   // Redeem DYAD for ETH
@@ -121,6 +133,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       uint eth       = amount*1e8 / _getEthPrice();
       id2eth[from]  -= eth;
       to.safeTransferETH(eth); // re-entrancy 
+      emit Redeem(from, amount, to, eth);
       return eth;
   }
 
