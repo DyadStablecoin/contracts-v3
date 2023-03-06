@@ -29,10 +29,10 @@ contract DNft2 is ERC721Enumerable, Owned {
   IAggregatorV3 public oracle;
 
   event MintNft  (uint indexed id, address indexed to);
-  event Liquidate(uint indexed id, address indexed to);
   event Deposit  (uint indexed id, uint amount);
   event Withdraw (uint indexed from, address indexed to, uint amount);
-  event Mint     (uint indexed from, address indexed to, uint amount);
+  event MintDyad (uint indexed from, address indexed to, uint amount);
+  event Liquidate(uint indexed id, address indexed to);
   event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
 
   error NotOwner            ();
@@ -103,7 +103,7 @@ contract DNft2 is ERC721Enumerable, Owned {
   }
 
   // Mint DYAD
-  function mint(uint from, address to, uint amount)
+  function mintDyad(uint from, address to, uint amount)
     external 
       isNftOwner(from)
     {
