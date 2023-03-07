@@ -127,8 +127,10 @@ contract DNftsTest is BaseTest {
     dNft.deposit{value: 1 ether}(id);
     dNft.mintDyad(id, address(this), 300 ether);
     assertEq(dyad.balanceOf(address(this)), 300 ether);
+    uint ethBefore = address(this).balance;
     dNft.redeem(id, address(this), 300 ether);
     assertEq(dyad.balanceOf(address(this)), 0 ether);
+    assertTrue(ethBefore < address(this).balance);
   }
   function testCannot_redeem_notNftOwner() public {
     uint id = dNft.mintNft(address(this));
