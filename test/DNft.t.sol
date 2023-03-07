@@ -25,6 +25,7 @@ contract DNftsTest is BaseTest {
     vm.expectRevert();
     dNft.mintNft(address(this));
   }
+
   // -------------------- mintInsiderNft --------------------
   function test_mintInsiderNft() public {
     vm.prank(MAINNET_OWNER);
@@ -41,11 +42,82 @@ contract DNftsTest is BaseTest {
     vm.expectRevert();
     dNft.mintInsiderNft(address(this));
   }
+
   // -------------------- deposit --------------------
   function test_deposit() public {
     uint id = dNft.mintNft(address(this));
     assertEq(dNft.id2eth(id), 0 ether);
     dNft.deposit{value: 10 ether}(id);
     assertEq(dNft.id2eth(id), 10 ether);
+  }
+
+  // -------------------- withdraw --------------------
+  function test_withdraw() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.withdraw(id, address(this), 1 ether);
+  }
+  function testCannot_withdraw_notNftOwner() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    vm.prank(address(1));
+    vm.expectRevert();
+    dNft.withdraw(id, address(this), 1 ether);
+  }
+  function testCannot_withdraw_moreThanCollateral() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    vm.expectRevert();
+    dNft.withdraw(id, address(this), 2 ether);
+  }
+  function testCannot_withdraw_moreThanCollateralRatio() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+    vm.expectRevert();
+    dNft.withdraw(id, address(this), 0.3 ether);
+  }
+
+  // -------------------- mintDyad --------------------
+  function test_mintDyad() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+  }
+  function testCannot_mintDyad_notNftOwner() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    vm.prank(address(1));
+    vm.expectRevert();
+    dNft.mintDyad(id, address(this), 300 ether);
+  }
+  function testCannot_mintDyad_moreThanCollateralRatio() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    vm.expectRevert();
+    dNft.mintDyad(id, address(this), 400 ether);
+  }
+
+  // -------------------- liquidate --------------------
+  function test_liquidate() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+    oracleMock.setPrice(100e8);
+    dNft.liquidate{value: 10 ether}(id, address(1));
+  }
+  function testCannot_liquidate_CrTooHigh() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    vm.expectRevert();
+    dNft.liquidate{value: 10 ether}(id, address(1));
+  }
+  function testCannot_liquidate_CrTooLow() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+    oracleMock.setPrice(100e8);
+    vm.expectRevert();
+    dNft.liquidate{value: 1 ether}(id, address(1));
   }
 }
