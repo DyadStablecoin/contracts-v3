@@ -12,8 +12,8 @@ import {Dyad} from "./Dyad.sol";
 
 contract DNft is ERC721Enumerable, Owned {
   using SafeTransferLib   for address;
-  using SafeCast          for int256;
-  using FixedPointMathLib for uint256;
+  using SafeCast          for int;
+  using FixedPointMathLib for uint;
 
   uint public constant INSIDER_MINTS             = 300; 
   uint public constant PUBLIC_MINTS              = 1700; 
@@ -197,9 +197,9 @@ contract DNft is ERC721Enumerable, Owned {
     returns (uint) {
       (
         uint80 roundID,
-        int256 price,
+        int price,
         , 
-        uint256 timeStamp, 
+        uint timeStamp, 
         uint80 answeredInRound
       ) = oracle.latestRoundData();
       if (timeStamp == 0) revert IncompleteRound();
@@ -211,8 +211,8 @@ contract DNft is ERC721Enumerable, Owned {
   function _beforeTokenTransfer(
       address from,
       address to,
-      uint256 id, 
-      uint256 batchSize 
+      uint id, 
+      uint batchSize 
   ) internal 
     override {
       super._beforeTokenTransfer(from, to, id, batchSize);
