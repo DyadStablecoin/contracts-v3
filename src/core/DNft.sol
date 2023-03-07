@@ -22,8 +22,15 @@ contract DNft is ERC721Enumerable, Owned {
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
 
+  struct Permission {
+    bool    hasPermission; 
+    uint248 lastUpdated;
+  }
+
   mapping(uint => uint) public id2eth;
   mapping(uint => uint) public id2dyad;
+  mapping(uint => uint) public id2lastOwnershipChange; 
+  mapping(uint => mapping (address => Permission)) public id2permission; 
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -34,6 +41,8 @@ contract DNft is ERC721Enumerable, Owned {
   event MintDyad (uint indexed from, address indexed to, uint amount);
   event Liquidate(uint indexed id, address indexed to);
   event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
+  event Grant    (uint indexed id, address indexed operator);
+  event Revoke   (uint indexed id, address indexed operator);
 
   error NotOwner            ();
   error StaleData           ();
@@ -137,6 +146,35 @@ contract DNft is ERC721Enumerable, Owned {
       return eth;
   }
 
+  function grant(uint id, address operator) 
+    external 
+      onlyNftOwner(id) 
+    {
+      id2permission[id][operator] = Permission(true, uint248(block.number));
+      emit Grant(id, operator);
+  }
+
+  function revoke(uint id, address operator) 
+    external 
+      onlyNftOwner(id) 
+    {
+      delete id2permission[id][operator];
+      emit Revoke(id, operator);
+  }
+
+  function hasPermission(uint id, address operator) 
+    public 
+    view 
+    returns (bool) {
+      return (
+        ownerOf(id) == operator || 
+        (
+          id2permission[id][operator].hasPermission && 
+          id2permission[id][operator].lastUpdated > id2lastOwnershipChange[id]
+        )
+      );
+  }
+
   // Get Collateralization Ratio of the dNFT
   function _collatRatio(uint id) 
     private 
@@ -163,5 +201,17 @@ contract DNft is ERC721Enumerable, Owned {
       if (timeStamp == 0) revert IncompleteRound();
       if (answeredInRound < roundID) revert StaleData();
       return price.toUint256();
+  }
+
+  // We have to set `lastOwnershipChange` in order to reset permissions
+  function _beforeTokenTransfer(
+      address from,
+      address to,
+      uint256 id, 
+      uint256 batchSize 
+  ) internal 
+    override {
+      super._beforeTokenTransfer(from, to, id, batchSize);
+      id2lastOwnershipChange[id] = block.number; // resets permissions
   }
 }

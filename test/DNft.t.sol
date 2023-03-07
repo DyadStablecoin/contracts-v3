@@ -104,7 +104,9 @@ contract DNftsTest is BaseTest {
     dNft.deposit{value: 1 ether}(id);
     dNft.mintDyad(id, address(this), 300 ether);
     oracleMock.setPrice(100e8);
+    uint ethVaultBefore = dNft.id2eth(id);
     dNft.liquidate{value: 10 ether}(id, address(1));
+    assertTrue(ethVaultBefore < dNft.id2eth(id));
   }
   function testCannot_liquidate_CrTooHigh() public {
     uint id = dNft.mintNft(address(this));
@@ -128,9 +130,15 @@ contract DNftsTest is BaseTest {
     dNft.mintDyad(id, address(this), 300 ether);
     assertEq(dyad.balanceOf(address(this)), 300 ether);
     uint ethBefore = address(this).balance;
+    uint ethVaultBefore = dNft.id2eth(id);
+    assertEq(dyad.balanceOf(address(this)), 300 ether);
+    assertEq(dNft.id2dyad(id), 300 ether);
     dNft.redeem(id, address(this), 300 ether);
     assertEq(dyad.balanceOf(address(this)), 0 ether);
     assertTrue(ethBefore < address(this).balance);
+    assertTrue(ethVaultBefore > dNft.id2eth(id));
+    assertEq(dyad.balanceOf(address(this)), 0);
+    assertEq(dNft.id2dyad(id), 0);
   }
   function testCannot_redeem_notNftOwner() public {
     uint id = dNft.mintNft(address(this));
