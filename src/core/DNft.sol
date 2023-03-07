@@ -27,10 +27,10 @@ contract DNft is ERC721Enumerable, Owned {
     uint248 lastUpdated;
   }
 
-  mapping(uint => uint) public id2eth;
-  mapping(uint => uint) public id2dyad;
+  mapping(uint => uint)                            public id2eth;
+  mapping(uint => uint)                            public id2dyad;
   mapping(uint => mapping (address => Permission)) public id2permission; 
-  mapping(uint => uint) public id2lastOwnershipChange; 
+  mapping(uint => uint)                            public id2lastOwnershipChange; 
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
