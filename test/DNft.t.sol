@@ -120,4 +120,29 @@ contract DNftsTest is BaseTest {
     vm.expectRevert();
     dNft.liquidate{value: 1 ether}(id, address(1));
   }
+
+  // -------------------- redeem --------------------
+  function test_redeem() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+    assertEq(dyad.balanceOf(address(this)), 300 ether);
+    dNft.redeem(id, address(this), 300 ether);
+    assertEq(dyad.balanceOf(address(this)), 0 ether);
+  }
+  function testCannot_redeem_notNftOwner() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+    vm.prank(address(1));
+    vm.expectRevert();
+    dNft.redeem(id, address(this), 300 ether);
+  }
+  function testCannot_redeem_moreThanWithdrawn() public {
+    uint id = dNft.mintNft(address(this));
+    dNft.deposit{value: 1 ether}(id);
+    dNft.mintDyad(id, address(this), 300 ether);
+    vm.expectRevert();
+    dNft.redeem(id, address(this), 400 ether);
+  }
 }
