@@ -9,7 +9,6 @@ contract DeployMainnet is Script, Parameters {
   function run() public {
       new DeployBase().deploy(
         MAINNET_ORACLE,
-        MAINNET_MIN_MINT_DYAD_DEPOSIT, 
         MAINNET_OWNER
       );
   }

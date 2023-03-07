@@ -110,7 +110,7 @@ contract DNft2 is ERC721Enumerable, Owned {
       id2dyad[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       dyad.mint(to, amount);
-      emit Mint(from, to, amount);
+      emit MintDyad(from, to, amount);
   }
 
   function liquidate(uint id, address to) 

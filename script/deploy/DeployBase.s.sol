@@ -8,7 +8,7 @@ import {IDNft} from "../../src/interfaces/IDNft.sol";
 import {Parameters} from "../../src/Parameters.sol";
 
 contract DeployBase is Script, Parameters {
-  function deploy(address oracle, uint minMintDyadDeposit, address owner)
+  function deploy(address oracle, address owner)
     public 
     payable 
     returns (address, address) {
@@ -18,7 +18,6 @@ contract DeployBase is Script, Parameters {
       DNft dNft = new DNft(
         address(dyad),
         oracle,
-        minMintDyadDeposit, 
         owner
       );
       dyad.transferOwnership(address(dNft));
