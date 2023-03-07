@@ -29,8 +29,8 @@ contract DNft is ERC721Enumerable, Owned {
 
   mapping(uint => uint) public id2eth;
   mapping(uint => uint) public id2dyad;
-  mapping(uint => uint) public id2lastOwnershipChange; 
   mapping(uint => mapping (address => Permission)) public id2permission; 
+  mapping(uint => uint) public id2lastOwnershipChange; 
 
   Dyad          public dyad;
   IAggregatorV3 public oracle;
@@ -51,9 +51,13 @@ contract DNft is ERC721Enumerable, Owned {
   error IncompleteRound     ();
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
+  error MissingPermission   ();
 
-  modifier onlyNftOwner(uint id) {
+  modifier isNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
+  }
+  modifier isNftOwnerOrHasPermission(uint id) {
+    if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
 
   constructor(
@@ -103,7 +107,7 @@ contract DNft is ERC721Enumerable, Owned {
   // Withdraw ETH
   function withdraw(uint from, address to, uint amount) 
     external 
-      onlyNftOwner(from) 
+      isNftOwnerOrHasPermission(from) 
     {
       id2eth[from] -= amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
@@ -114,7 +118,7 @@ contract DNft is ERC721Enumerable, Owned {
   // Mint DYAD
   function mintDyad(uint from, address to, uint amount)
     external 
-      onlyNftOwner(from)
+      isNftOwnerOrHasPermission(from)
     {
       id2dyad[from] += amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
@@ -135,7 +139,7 @@ contract DNft is ERC721Enumerable, Owned {
   // Redeem DYAD for ETH
   function redeem(uint from, address to, uint amount)
     external 
-      onlyNftOwner(from)
+      isNftOwnerOrHasPermission(from)
     returns (uint) { 
       dyad.burn(msg.sender, amount);
       id2dyad[from] -= amount;
@@ -148,7 +152,7 @@ contract DNft is ERC721Enumerable, Owned {
 
   function grant(uint id, address operator) 
     external 
-      onlyNftOwner(id) 
+      isNftOwner(id) 
     {
       id2permission[id][operator] = Permission(true, uint248(block.number));
       emit Grant(id, operator);
@@ -156,7 +160,7 @@ contract DNft is ERC721Enumerable, Owned {
 
   function revoke(uint id, address operator) 
     external 
-      onlyNftOwner(id) 
+      isNftOwner(id) 
     {
       delete id2permission[id][operator];
       emit Revoke(id, operator);
