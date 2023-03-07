@@ -197,9 +197,9 @@ contract DNft is ERC721Enumerable, Owned {
     returns (uint) {
       (
         uint80 roundID,
-        int price,
+        int256 price,
         , 
-        uint timeStamp, 
+        uint256 timeStamp, 
         uint80 answeredInRound
       ) = oracle.latestRoundData();
       if (timeStamp == 0) revert IncompleteRound();
