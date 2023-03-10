@@ -23,7 +23,6 @@ contract BaseTest is Test, Parameters {
     DeployBase deployBase = new DeployBase();
     (address _dNft, address _dyad) = deployBase.deploy(
       address(oracleMock),
-      MAINNET_MIN_MINT_DYAD_DEPOSIT, 
       MAINNET_OWNER
     );
     dNft    = DNft(_dNft);
