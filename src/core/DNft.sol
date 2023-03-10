@@ -52,6 +52,8 @@ contract DNft is ERC721Enumerable, Owned {
   error PublicMintsExceeded ();
   error InsiderMintsExceeded();
   error MissingPermission   ();
+  error NotEnoughEth        ();
+  error TooMuchEth          ();
 
   modifier isNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
@@ -72,8 +74,11 @@ contract DNft is ERC721Enumerable, Owned {
 
   function mintNft(address to)
     external 
+    payable
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
+      if (msg.value != 0.1 ether)       revert NotEnoughEth();
+      address(0).safeTransferETH(msg.value); // burn ETH
       return _mintNft(to);
   }
 
@@ -100,7 +105,10 @@ contract DNft is ERC721Enumerable, Owned {
     external 
     payable
   {
-    id2eth[id] += msg.value;
+    uint eth  = id2eth[id];
+    eth      += msg.value;
+    if (eth > 1 ether) revert TooMuchEth();
+    id2eth[id] = eth;
     emit Deposit(id, msg.value);
   }
 
