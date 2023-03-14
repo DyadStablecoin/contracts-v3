@@ -59,8 +59,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     payable
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
-      if (msg.value != 0.1 ether)       revert IncorrectEthValue();
-      address(0).safeTransferETH(msg.value); // burn ETH
+      // if (msg.value != 0.1 ether)       revert IncorrectEthValue();
+      // address(0).safeTransferETH(msg.value); // burn ETH
       return _mintNft(to);
   }
 
@@ -91,7 +91,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   {
     uint eth  = id2eth[id];
     eth      += msg.value;
-    if (eth > 1 ether) revert TooMuchEth();
+    // if (eth > 1 ether) revert TooMuchEth();
     id2eth[id] = eth;
     emit Deposit(id, msg.value);
   }
