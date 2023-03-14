@@ -7,10 +7,11 @@ import {SafeTransferLib} from "@solmate/src/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
 import {Owned} from "@solmate/src/auth/Owned.sol";
 
+import {IDNft} from "../interfaces/IDNft.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {Dyad} from "./Dyad.sol";
 
-contract DNft is ERC721Enumerable, Owned {
+contract DNft is ERC721Enumerable, Owned, IDNft {
   using SafeTransferLib   for address;
   using SafeCast          for int;
   using FixedPointMathLib for uint;
@@ -35,26 +36,6 @@ contract DNft is ERC721Enumerable, Owned {
   Dyad          public dyad;
   IAggregatorV3 public oracle;
 
-  event MintNft  (uint indexed id, address indexed to);
-  event Deposit  (uint indexed id, uint amount);
-  event Withdraw (uint indexed from, address indexed to, uint amount);
-  event MintDyad (uint indexed from, address indexed to, uint amount);
-  event Liquidate(uint indexed id, address indexed to);
-  event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
-  event Grant    (uint indexed id, address indexed operator);
-  event Revoke   (uint indexed id, address indexed operator);
-
-  error NotOwner            ();
-  error StaleData           ();
-  error CrTooLow            ();
-  error CrTooHigh           ();
-  error IncompleteRound     ();
-  error PublicMintsExceeded ();
-  error InsiderMintsExceeded();
-  error MissingPermission   ();
-  error IncorrectEthValue   ();
-  error TooMuchEth          ();
-
   modifier isNftOwner(uint id) {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
@@ -72,6 +53,7 @@ contract DNft is ERC721Enumerable, Owned {
       oracle = IAggregatorV3(_oracle);
   }
 
+  /// @inheritdoc IDNft
   function mintNft(address to)
     external 
     payable
@@ -82,6 +64,7 @@ contract DNft is ERC721Enumerable, Owned {
       return _mintNft(to);
   }
 
+  /// @inheritdoc IDNft
   function mintInsiderNft(address to)
     external 
       onlyOwner
@@ -104,6 +87,7 @@ contract DNft is ERC721Enumerable, Owned {
   function deposit(uint id) 
     external 
     payable
+      isNftOwnerOrHasPermission(id) 
   {
     uint eth  = id2eth[id];
     eth      += msg.value;
@@ -112,7 +96,7 @@ contract DNft is ERC721Enumerable, Owned {
     emit Deposit(id, msg.value);
   }
 
-  // Withdraw ETH
+  /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount) 
     external 
       isNftOwnerOrHasPermission(from) 
@@ -123,7 +107,7 @@ contract DNft is ERC721Enumerable, Owned {
       emit Withdraw(from, to, amount);
   }
 
-  // Mint DYAD
+  /// @inheritdoc IDNft
   function mintDyad(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
@@ -134,6 +118,7 @@ contract DNft is ERC721Enumerable, Owned {
       emit MintDyad(from, to, amount);
   }
 
+  /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
     payable {
@@ -144,7 +129,7 @@ contract DNft is ERC721Enumerable, Owned {
       emit Liquidate(id, to);
   }
 
-  // Redeem DYAD for ETH
+  /// @inheritdoc IDNft
   function redeem(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
@@ -158,6 +143,7 @@ contract DNft is ERC721Enumerable, Owned {
       return eth;
   }
 
+  /// @inheritdoc IDNft
   function grant(uint id, address operator) 
     external 
       isNftOwner(id) 
@@ -166,6 +152,7 @@ contract DNft is ERC721Enumerable, Owned {
       emit Grant(id, operator);
   }
 
+  /// @inheritdoc IDNft
   function revoke(uint id, address operator) 
     external 
       isNftOwner(id) 
