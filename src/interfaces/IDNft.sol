@@ -26,13 +26,9 @@ interface IDNft {
    * @notice Mint a new dNFT to `to`
    * @dev Will revert:
    *      - If the maximum number of public mints has been reached
-   *      - If `msg.value` is not enough to cover the deposit minimum
    *      - If `to` is the zero address
    * @dev Emits:
-   *      - Minted(address indexed to, uint indexed id)
-   *      - AddedShares(uint indexed id, uint amount)
-   * @dev For Auditors:
-   *      - To save gas it does not check if `msg.value` is zero 
+   *      - MintNft(address indexed to, uint indexed id)
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
@@ -41,32 +37,26 @@ interface IDNft {
   /**
    * @notice Mint new insider DNft to `to` 
    * @dev Note:
-   *      - An insider dNFT does not require a deposit
-   *      - An insider dNFT is locked from the start and can only be unlocked 
-   *        by the dNFT owner
+   *      - An insider dNFT does not require buring ETH to mint
    * @dev Will revert:
    *      - If not called by contract owner
    *      - If the maximum number of insider mints has been reached
    *      - If `to` is the zero address
    * @dev Emits:
-   *      - Minted(address indexed to, uint indexed id)
-   *      - AddedShares(uint indexed id, uint amount)
-   * @dev For Auditors:
-   *      - I'm aware that I'm misusing the underscore convention to denote a 
-   *        private/internal function. I'm doing it to show that this can  
-   *        not be called by anyone except for the contract owner.
+   *      - MintNft(address indexed to, uint indexed id)
    * @param to The address to mint the dNFT to
    * @return id Id of the new dNFT
    */
   function mintInsiderNft(address to) external returns (uint id);
 
   /**
-   * @notice Deposit ETH for deposited DYAD
+   * @notice Deposit ETH 
    * @dev Will revert:
    *      - If new deposit equals zero shares
-   *      - If `totalDeposit` equals 0
+   *      - If `msg.sender` is not the owner of the dNFT AND does not have 
+   *        permission
    * @dev Emits:
-   *      - AddedShares(uint indexed id, uint amount)
+   *      - Deposit(uint indexed id, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `msg.value` is zero 
    * @param id Id of the dNFT that gets the deposited DYAD
@@ -74,50 +64,39 @@ interface IDNft {
   function deposit(uint id) external payable;
 
   /**
-   * @notice Withdraw `amount` of deposited DYAD as an ERC-20 token from dNFT
+   * @notice Withdraw ETH from dNFT
    * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT AND does not have the
-   *        `WITHDRAW` permission
+   *      - If `msg.sender` is not the owner of the dNFT AND does not have 
+   *        permission
    *      - If `amount` to withdraw is larger than the dNFT deposit
-   *      - If deposit to withdraw equals zero shares
    *      - If Collateralization Ratio is is less than the min collaterization 
    *        ratio after the withdrawal
    * @dev Emits:
-   *      - Withdrawn(uint indexed from, address indexed to, uint amount)
+   *      - Withdraw(uint indexed from, address indexed to, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `amount` is 0 
    *      - To save gas it only fails implicitly if `from` does not have enough
-   *        deposited DYAD, by an underflow in `_subDeposit`
-   *      - `collatVault` and `newCollatRatio` are only used once and are therfore
-   *        unneccessary declarations that I only use to make the code easier 
-   *        to read. Hopefully the optimizer will inline them.
+   *        deposited ETH
    * @param from Id of the dNFT to withdraw from
-   * @param to Address to send the DYAD to
-   * @param amount Amount of DYAD to withdraw
+   * @param to Address to send the ETH to
+   * @param amount Amount of ETH to withdraw
    */
   function withdraw(uint from, address to, uint amount) external;
 
   /**
-   * @notice Withdraw `amount` of deposited DYAD as an ERC-20 token from dNFT
+   * @notice Mint `amount` of DYAD as an ERC-20 token from dNFT
    * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT AND does not have the
-   *        `WITHDRAW` permission
-   *      - If `amount` to withdraw is larger than the dNFT deposit
-   *      - If deposit to withdraw equals zero shares
+   *      - If `msg.sender` is not the owner of the dNFT AND does not have 
+   *        permission
    *      - If Collateralization Ratio is is less than the min collaterization 
-   *        ratio after the withdrawal
+   *        ratio after the mint
    * @dev Emits:
-   *      - Withdrawn(uint indexed from, address indexed to, uint amount)
+   *      - MintDyad(uint indexed from, address indexed to, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `amount` is 0 
-   *      - To save gas it only fails implicitly if `from` does not have enough
-   *        deposited DYAD, by an underflow in `_subDeposit`
-   *      - `collatVault` and `newCollatRatio` are only used once and are therfore
-   *        unneccessary declarations that I only use to make the code easier 
-   *        to read. Hopefully the optimizer will inline them.
-   * @param from Id of the dNFT to withdraw from
+   * @param from Id of the dNFT to mint from
    * @param to Address to send the DYAD to
-   * @param amount Amount of DYAD to withdraw
+   * @param amount Amount of DYAD to mint
    */
   function mintDyad(uint from, address to, uint amount) external;
 
@@ -127,7 +106,7 @@ interface IDNft {
    *      - If DYAD to redeem is larger thatn `msg.sender` DYAD balance
    *      - If the ETH transfer fails
    * @dev Emits:
-   *      - RedeemedDyad(uint indexed from, address indexed to, uint amount)
+   *      - Redeem(uint indexed from, address indexed to, uint amount)
    * @dev For Auditors:
    *      - To save gas it does not check if `amount` is 0 
    *      - `dyad.burn` is called in the beginning so we can revert as fast as
@@ -145,20 +124,17 @@ interface IDNft {
   function redeem(uint from, address to, uint amount) external returns (uint);
 
   /**
-   * @notice Liquidate dNFT by covering its missing shares and transfering it 
+   * @notice Liquidate dNFT by covering its missing deposit and transfering it 
    *         to a new owner
    * @dev Will revert:
-   *      - If dNFT shares are not under the `LIQUIDATION_THRESHLD`
-   *      - If new deposit equals zero shares
-   *      - If ETH sent is not enough to cover the missing shares
+   *      - If dNFT is over the `LIQUIDATION_THRESHLD` after deposit
+   *      - If ETH sent is not enough to put it over the `LIQUIDATION_THRESHLD`
    * @dev Emits:
-   *      - Liquidated(address indexed to, uint indexed id)
+   *      - Liquidate(address indexed to, uint indexed id)
    * @dev For Auditors:
    *      - No need to check if the dNFT exists because a dNFT `transfer` will
    *        revert if it does not exist.
-   *      - We could save gas by not defining `newShares`, but this would make 
-   *        the code less readable. Hopefully the optimizer takes care of this.
-   *      - All permissions for this dNFT are reset because `_transfer` calls 
+   *      - Permissions for this dNFT are reset because `_transfer` calls 
    *        `_beforeTokenTransfer`, where we set `lastOwnershipChange`
    * @param id Id of the dNFT to liquidate
    * @param to Address to send the dNFT to
@@ -172,7 +148,7 @@ interface IDNft {
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
-   *      - Granted(uint indexed id, address indexed operator)
+   *      - Grant(uint indexed id, address indexed operator)
    * @param id Id of the dNFT's permissions to modify
    * @param operator Operator to grant/revoke permissions for
    */
@@ -185,7 +161,7 @@ interface IDNft {
    * @dev Will revert:
    *      - If `msg.sender` is not the owner of the dNFT  
    * @dev Emits:
-   *      - Revoked(uint indexed id, address indexed operator)
+   *      - Revoke(uint indexed id, address indexed operator)
    * @param id Id of the dNFT's permissions to modify
    * @param operator Operator to revoke permissions from
    */
