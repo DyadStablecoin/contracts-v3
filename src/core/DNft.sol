@@ -83,8 +83,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       return id;
   }
 
-  // Deposit ETH
-  function deposit(uint id) 
+  /// @inheritdoc IDNft
+  function depositEth(uint id) 
     external 
     payable
       isNftOwnerOrHasPermission(id) 
@@ -93,7 +93,17 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     eth      += msg.value;
     // if (eth > 1 ether) revert TooMuchEth();
     id2eth[id] = eth;
-    emit Deposit(id, msg.value);
+    emit DepositEth(id, msg.value);
+  }
+
+  // Deposit Dyad
+  function depositDyad(uint id, uint amount) 
+    external 
+      isNftOwnerOrHasPermission(id) 
+  {
+    dyad.burn(msg.sender, amount);
+    id2dyad[id] -= amount;
+    emit DepositDyad(id, amount);
   }
 
   /// @inheritdoc IDNft
