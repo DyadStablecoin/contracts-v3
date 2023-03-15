@@ -62,7 +62,7 @@ interface IDNft {
    *      - To save gas it does not check if `msg.value` is zero 
    * @param id Id of the dNFT that gets the deposited DYAD
    */
-  function depositEth(uint id) external payable;
+  function deposit(uint id) external payable;
 
   /**
    * @notice Withdraw ETH from dNFT
