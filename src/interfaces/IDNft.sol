@@ -3,13 +3,14 @@ pragma solidity = 0.8.17;
 
 interface IDNft {
   event MintNft  (uint indexed id, address indexed to);
-  event Deposit  (uint indexed id, uint amount);
   event Withdraw (uint indexed from, address indexed to, uint amount);
   event MintDyad (uint indexed from, address indexed to, uint amount);
   event Liquidate(uint indexed id, address indexed to);
   event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
   event Grant    (uint indexed id, address indexed operator);
   event Revoke   (uint indexed id, address indexed operator);
+  event DepositEth (uint indexed id, uint amount);
+  event DepositDyad(uint indexed id, uint amount);
 
   error NotOwner            ();
   error StaleData           ();
@@ -61,7 +62,7 @@ interface IDNft {
    *      - To save gas it does not check if `msg.value` is zero 
    * @param id Id of the dNFT that gets the deposited DYAD
    */
-  function deposit(uint id) external payable;
+  function depositEth(uint id) external payable;
 
   /**
    * @notice Withdraw ETH from dNFT
