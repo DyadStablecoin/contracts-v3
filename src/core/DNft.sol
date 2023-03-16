@@ -18,6 +18,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
 
   uint public constant INSIDER_MINTS             = 300; 
   uint public constant PUBLIC_MINTS              = 1700; 
+  uint public constant ETH_SACRIFICE             = 0.1 ether; 
   uint public constant MIN_COLLATERIZATION_RATIO = 3e18; // 300%
 
   uint public insiderMints; // Number of insider mints
@@ -59,8 +60,8 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     payable
     returns (uint) {
       if (++publicMints > PUBLIC_MINTS) revert PublicMintsExceeded();
-      // if (msg.value != 0.1 ether)       revert IncorrectEthValue();
-      // address(0).safeTransferETH(msg.value); // burn ETH
+      if (msg.value != ETH_SACRIFICE)   revert IncorrectEthSacrifice();
+      address(0).safeTransferETH(msg.value); // burn ETH
       return _mintNft(to);
   }
 
@@ -78,7 +79,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     private 
     returns (uint) {
       uint id = totalSupply();
-      _safeMint(to, id);
+      _safeMint(to, id); // re-entrancy
       emit MintNft(id, to);
       return id;
   }
@@ -89,10 +90,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     payable
       isNftOwnerOrHasPermission(id) 
   {
-    uint eth  = id2eth[id];
-    eth      += msg.value;
-    // if (eth > 1 ether) revert TooMuchEth();
-    id2eth[id] = eth;
+    id2eth[id] += msg.value;
     emit DepositEth(id, msg.value);
   }
 
@@ -118,14 +116,14 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit MintDyad(from, to, amount);
   }
 
-  // Burn Dyad
+  /// @inheritdoc IDNft
   function burnDyad(uint id, uint amount) 
     external 
       isNftOwnerOrHasPermission(id) 
   {
     dyad.burn(msg.sender, amount);
     id2dyad[id] -= amount;
-    emit DepositDyad(id, amount);
+    emit BurnDyad(id, amount);
   }
 
   /// @inheritdoc IDNft

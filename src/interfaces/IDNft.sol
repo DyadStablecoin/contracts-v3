@@ -5,23 +5,23 @@ interface IDNft {
   event MintNft  (uint indexed id, address indexed to);
   event Withdraw (uint indexed from, address indexed to, uint amount);
   event MintDyad (uint indexed from, address indexed to, uint amount);
+  event BurnDyad (uint indexed id, uint amount);
   event Liquidate(uint indexed id, address indexed to);
   event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
   event Grant    (uint indexed id, address indexed operator);
   event Revoke   (uint indexed id, address indexed operator);
   event DepositEth (uint indexed id, uint amount);
-  event DepositDyad(uint indexed id, uint amount);
 
-  error NotOwner            ();
-  error StaleData           ();
-  error CrTooLow            ();
-  error CrTooHigh           ();
-  error IncompleteRound     ();
-  error PublicMintsExceeded ();
-  error InsiderMintsExceeded();
-  error MissingPermission   ();
-  error IncorrectEthValue   ();
-  error TooMuchEth          ();
+  error NotOwner             ();
+  error StaleData            ();
+  error CrTooLow             ();
+  error CrTooHigh            ();
+  error IncompleteRound      ();
+  error PublicMintsExceeded  ();
+  error InsiderMintsExceeded ();
+  error MissingPermission    ();
+  error IncorrectEthSacrifice();
+  error TooMuchEth           ();
 
   /**
    * @notice Mint a new dNFT to `to`
@@ -100,6 +100,20 @@ interface IDNft {
    * @param amount Amount of DYAD to mint
    */
   function mintDyad(uint from, address to, uint amount) external;
+
+  /**
+   * @notice Burn `amount` of DYAD 
+   * @dev Will revert:
+   *      - If `msg.sender` is not the owner of the dNFT AND does not have 
+   *        permission
+   * @dev Emits:
+   *      - BurnDyad(uint indexed from, address indexed to, uint amount)
+   * @dev For Auditors:
+   *      - To save gas it does not check if `amount` is 0 
+   * @param id Id of the dNFT to mint from
+   * @param amount Amount of DYAD to mint
+   */
+  function burnDyad(uint id, uint amount) external;
 
   /**
    * @notice Redeem DYAD ERC20 for ETH
