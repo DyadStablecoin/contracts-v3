@@ -43,6 +43,9 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   modifier isNftOwnerOrHasPermission(uint id) {
     if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
+  modifier isValidNft(uint id) {
+    if (id >= totalSupply()) revert InvalidNft(); _;
+  }
 
   constructor(
       address _dyad,
@@ -88,10 +91,10 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   function deposit(uint id) 
     external 
     payable
-      isNftOwnerOrHasPermission(id) 
+      isValidNft(id) 
   {
     id2eth[id] += msg.value;
-    emit DepositEth(id, msg.value);
+    emit Deposit(id, msg.value);
   }
 
   /// @inheritdoc IDNft
@@ -101,7 +104,7 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     {
       id2eth[from] -= amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
-      to.safeTransferETH(amount); 
+      to.safeTransferETH(amount); // re-entrancy
       emit Withdraw(from, to, amount);
   }
 
@@ -119,7 +122,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
   /// @inheritdoc IDNft
   function burnDyad(uint id, uint amount) 
     external 
-      isNftOwnerOrHasPermission(id) 
   {
     dyad.burn(msg.sender, amount);
     id2dyad[id] -= amount;
