@@ -12,7 +12,7 @@ import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {Dyad} from "./Dyad.sol";
 import {Nft} from "./Nft.sol";
 
-contract DNftERC20 {
+contract Collateral {
   using SafeTransferLib   for address;
   using SafeCast          for int;
   using FixedPointMathLib for uint;
@@ -55,8 +55,6 @@ contract DNftERC20 {
   }
 
   constructor(
-      string memory _name,  
-      string memory _symbol,  
       address _dNft, 
       address _dyad,
       address _oracle 

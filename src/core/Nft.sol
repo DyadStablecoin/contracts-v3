@@ -29,6 +29,7 @@ contract Nft is ERC721Enumerable, Owned {
     uint248 lastUpdated;
   }
 
+  mapping(address => bool)                         public isLiquidator;
   mapping(uint => mapping (address => Permission)) public id2permission; 
   mapping(uint => uint)                            public id2lastOwnershipChange; 
 
@@ -95,6 +96,13 @@ contract Nft is ERC721Enumerable, Owned {
           id2permission[id][operator].lastUpdated > id2lastOwnershipChange[id]
         )
       );
+  }
+
+  function setLiquidator(address liquidator)
+    external 
+      onlyOwner 
+    {
+      isLiquidator[liquidator] = true;
   }
 
   function transfer(

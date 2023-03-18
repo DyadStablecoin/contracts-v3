@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {DNftERC20} from "./DNftERC20.sol";
+import {Collateral} from "./DNftERC20.sol";
 import {Dyad} from "./Dyad.sol";
+import {Nft} from "./Nft.sol";
 
 contract Factory {
 
@@ -10,6 +11,12 @@ contract Factory {
 
   // token => oracle => deployed
   mapping(address => mapping(address => bool)) public deployed;
+
+  Nft public nft;
+
+  constructor(address _nft) {
+    nft = new Nft(_nft);
+  }
 
   function deploy(
     address _token, 
@@ -23,16 +30,15 @@ contract Factory {
       string.concat("d", _flavor),
       msg.sender
     );
-    DNftERC20 dNft = new DNftERC20(
-      string.concat("DYAD NFT - ", _flavor),
-      string.concat("d", _flavor, "-NFT"),
+    Collateral collateral = new Collateral(
       address(dyad),
       _token,
       msg.sender
     );
 
-    dyad.transferOwnership(address(dNft));
+    nft.setLiquidator(address(collateral)); 
+    dyad.transferOwnership(address(collateral));
     deployed[_token][_oracle] = true;
-    emit Deployed(address(dNft), address(dyad));
+    emit Deployed(address(collateral), address(dyad));
   }
 }
