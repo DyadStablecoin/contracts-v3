@@ -21,6 +21,18 @@ contract Nft is ERC721Enumerable, Owned {
   uint public insiderMints; // Number of insider mints
   uint public publicMints;  // Number of public mints
 
+  struct Permission {
+    bool    hasPermission; 
+    uint248 lastUpdated;
+  }
+
+  mapping(uint => mapping (address => Permission)) public id2permission; 
+  mapping(uint => uint)                            public id2lastOwnershipChange; 
+
+  modifier isNftOwnerOrHasPermission(uint id) {
+    if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
+  }
+
   constructor(
       address _owner
   ) ERC721("Dyad NFT", "dNFT") 
@@ -51,5 +63,48 @@ contract Nft is ERC721Enumerable, Owned {
       _safeMint(to, id); // re-entrancy
       emit MintNft(id, to);
       return id;
+  }
+
+  /// @inheritdoc IDNft
+  function grant(uint id, address operator) 
+    external 
+      isNftOwner(id) 
+    {
+      id2permission[id][operator] = Permission(true, uint248(block.number));
+      emit Grant(id, operator);
+  }
+
+  /// @inheritdoc IDNft
+  function revoke(uint id, address operator) 
+    external 
+      isNftOwner(id) 
+    {
+      delete id2permission[id][operator];
+      emit Revoke(id, operator);
+  }
+
+  function hasPermission(uint id, address operator) 
+    public 
+    view 
+    returns (bool) {
+      return (
+        ownerOf(id) == operator || 
+        (
+          id2permission[id][operator].hasPermission && 
+          id2permission[id][operator].lastUpdated > id2lastOwnershipChange[id]
+        )
+      );
+  }
+
+  // We have to set `lastOwnershipChange` in order to reset permissions
+  function _beforeTokenTransfer(
+      address from,
+      address to,
+      uint id, 
+      uint batchSize 
+  ) internal 
+    override {
+      super._beforeTokenTransfer(from, to, id, batchSize);
+      id2lastOwnershipChange[id] = block.number; // resets permissions
   }
 }

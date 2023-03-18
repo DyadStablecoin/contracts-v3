@@ -57,7 +57,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       oracle = IAggregatorV3(_oracle);
   }
 
-  /// @inheritdoc IDNft
   function mintNft(address to)
     external 
     payable
@@ -68,7 +67,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       return _mintNft(to);
   }
 
-  /// @inheritdoc IDNft
   function mintInsiderNft(address to)
     external 
       onlyOwner

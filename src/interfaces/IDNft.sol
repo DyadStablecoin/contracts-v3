@@ -25,33 +25,6 @@ interface IDNft {
   error InvalidNft           ();
 
   /**
-   * @notice Mint a new dNFT to `to`
-   * @dev Will revert:
-   *      - If the maximum number of public mints has been reached
-   *      - If `to` is the zero address
-   * @dev Emits:
-   *      - MintNft(address indexed to, uint indexed id)
-   * @param to The address to mint the dNFT to
-   * @return id Id of the new dNFT
-   */
-  function mintNft(address to) external payable returns (uint id);
-
-  /**
-   * @notice Mint new insider DNft to `to` 
-   * @dev Note:
-   *      - An insider dNFT does not require buring ETH to mint
-   * @dev Will revert:
-   *      - If not called by contract owner
-   *      - If the maximum number of insider mints has been reached
-   *      - If `to` is the zero address
-   * @dev Emits:
-   *      - MintNft(address indexed to, uint indexed id)
-   * @param to The address to mint the dNFT to
-   * @return id Id of the new dNFT
-   */
-  function mintInsiderNft(address to) external returns (uint id);
-
-  /**
    * @notice Deposit ETH 
    * @dev Will revert:
    *      - If new deposit equals zero shares
@@ -159,29 +132,29 @@ interface IDNft {
    */
   function liquidate(uint id, address to) external payable;
 
-  /**
-   * @notice Grant permission to an `operator`
-   * @notice Minting a DNft and grant it some permissions in the same block is
-   *         not possible, because it could be exploited by regular transfers.
-   * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT  
-   * @dev Emits:
-   *      - Grant(uint indexed id, address indexed operator)
-   * @param id Id of the dNFT's permissions to modify
-   * @param operator Operator to grant/revoke permissions for
-   */
-  function grant(uint id, address operator) external;
+  // /**
+  //  * @notice Grant permission to an `operator`
+  //  * @notice Minting a DNft and grant it some permissions in the same block is
+  //  *         not possible, because it could be exploited by regular transfers.
+  //  * @dev Will revert:
+  //  *      - If `msg.sender` is not the owner of the dNFT  
+  //  * @dev Emits:
+  //  *      - Grant(uint indexed id, address indexed operator)
+  //  * @param id Id of the dNFT's permissions to modify
+  //  * @param operator Operator to grant/revoke permissions for
+  //  */
+  // function grant(uint id, address operator) external;
 
-  /**
-   * @notice Revoke permission from an `operator`
-   * @notice Minting a DNft and revoking the permission in the same block is
-   *         not possible, because it could be exploited by regular transfers.
-   * @dev Will revert:
-   *      - If `msg.sender` is not the owner of the dNFT  
-   * @dev Emits:
-   *      - Revoke(uint indexed id, address indexed operator)
-   * @param id Id of the dNFT's permissions to modify
-   * @param operator Operator to revoke permissions from
-   */
-  function revoke(uint id, address operator) external;
+  // /**
+  //  * @notice Revoke permission from an `operator`
+  //  * @notice Minting a DNft and revoking the permission in the same block is
+  //  *         not possible, because it could be exploited by regular transfers.
+  //  * @dev Will revert:
+  //  *      - If `msg.sender` is not the owner of the dNFT  
+  //  * @dev Emits:
+  //  *      - Revoke(uint indexed id, address indexed operator)
+  //  * @param id Id of the dNFT's permissions to modify
+  //  * @param operator Operator to revoke permissions from
+  //  */
+  // function revoke(uint id, address operator) external;
 }
