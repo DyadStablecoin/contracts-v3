@@ -85,7 +85,6 @@ contract DNftERC20 {
       emit Withdraw(from, to, amount);
   }
 
-  /// @inheritdoc IDNft
   function mintDyad(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
@@ -110,7 +109,7 @@ contract DNftERC20 {
       if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
       id2collateral[id] += msg.value;
       if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
-      _transfer(ownerOf(id), to, id);
+      dNft.transfer(id, to);
       emit Liquidate(id, to);
   }
 

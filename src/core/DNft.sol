@@ -85,7 +85,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       return id;
   }
 
-  /// @inheritdoc IDNft
   function deposit(uint id) 
     external 
     payable
@@ -95,7 +94,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     emit Deposit(id, msg.value);
   }
 
-  /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount) 
     external 
       isNftOwnerOrHasPermission(from) 
@@ -106,7 +104,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit Withdraw(from, to, amount);
   }
 
-  /// @inheritdoc IDNft
   function mintDyad(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
@@ -117,7 +114,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit MintDyad(from, to, amount);
   }
 
-  /// @inheritdoc IDNft
   function burnDyad(uint id, uint amount) 
     external 
   {
@@ -126,7 +122,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
     emit BurnDyad(id, amount);
   }
 
-  /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
     payable {
@@ -137,7 +132,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit Liquidate(id, to);
   }
 
-  /// @inheritdoc IDNft
   function redeem(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)
@@ -151,7 +145,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       return eth;
   }
 
-  /// @inheritdoc IDNft
   function grant(uint id, address operator) 
     external 
       isNftOwner(id) 
@@ -160,7 +153,6 @@ contract DNft is ERC721Enumerable, Owned, IDNft {
       emit Grant(id, operator);
   }
 
-  /// @inheritdoc IDNft
   function revoke(uint id, address operator) 
     external 
       isNftOwner(id) 

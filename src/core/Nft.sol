@@ -97,6 +97,13 @@ contract Nft is ERC721Enumerable, Owned {
       );
   }
 
+  function transfer(
+      uint id, 
+      address to 
+  ) public {
+      _transfer(ownerOf(id), to, id);
+  }
+
   // We have to set `lastOwnershipChange` in order to reset permissions
   function _beforeTokenTransfer(
       address from,
