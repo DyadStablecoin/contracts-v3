@@ -10,11 +10,27 @@ import {Owned} from "@solmate/src/auth/Owned.sol";
 import {IDNft} from "../interfaces/IDNft.sol";
 import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {Dyad} from "./Dyad.sol";
+import {Nft} from "./Nft.sol";
 
 contract DNftERC20 {
   using SafeTransferLib   for address;
   using SafeCast          for int;
   using FixedPointMathLib for uint;
+
+  error StaleData            ();
+  error IncompleteRound      ();
+  error CrTooLow             ();
+  error CrTooHigh            ();
+  error InvalidNft           ();
+  error NotOwner             ();
+  error MissingPermission    ();
+
+  event Deposit  (uint indexed id, uint amount);
+  event Redeem   (uint indexed from, uint amount, address indexed to, uint eth);
+  event Liquidate(uint indexed id, address indexed to);
+  event Withdraw (uint indexed from, address indexed to, uint amount);
+  event MintDyad (uint indexed from, address indexed to, uint amount);
+  event BurnDyad (uint indexed id, uint amount);
 
   uint public constant MIN_COLLATERIZATION_RATIO = 3e18; // 300%
 
@@ -24,27 +40,32 @@ contract DNftERC20 {
   mapping(uint => uint) public id2collateral;
   mapping(uint => uint) public id2dyad;
 
+  Nft           public dNft;
   Dyad          public dyad;
   IAggregatorV3 public oracle;
 
   modifier isNftOwner(uint id) {
-    if (ownerOf(id) != msg.sender) revert NotOwner(); _;
+    if (dNft.ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
   modifier isValidNft(uint id) {
-    if (id >= totalSupply()) revert InvalidNft(); _;
+    if (id >= dNft.totalSupply()) revert InvalidNft(); _;
+  }
+  modifier isNftOwnerOrHasPermission(uint id) {
+    if (!dNft.hasPermission(id, msg.sender)) revert MissingPermission() ; _;
   }
 
   constructor(
       string memory _name,  
       string memory _symbol,  
+      address _dNft, 
       address _dyad,
       address _oracle 
   ) {
+      dNft   = Nft(_dNft);
       dyad   = Dyad(_dyad);
       oracle = IAggregatorV3(_oracle);
   }
 
-  /// @inheritdoc IDNft
   function deposit(uint id) 
     external 
     payable
@@ -54,7 +75,6 @@ contract DNftERC20 {
     emit Deposit(id, msg.value);
   }
 
-  /// @inheritdoc IDNft
   function withdraw(uint from, address to, uint amount) 
     external 
       isNftOwnerOrHasPermission(from) 
@@ -76,7 +96,6 @@ contract DNftERC20 {
       emit MintDyad(from, to, amount);
   }
 
-  /// @inheritdoc IDNft
   function burnDyad(uint id, uint amount) 
     external 
   {
@@ -85,7 +104,6 @@ contract DNftERC20 {
     emit BurnDyad(id, amount);
   }
 
-  /// @inheritdoc IDNft
   function liquidate(uint id, address to) 
     external 
     payable {
@@ -96,7 +114,6 @@ contract DNftERC20 {
       emit Liquidate(id, to);
   }
 
-  /// @inheritdoc IDNft
   function redeem(uint from, address to, uint amount)
     external 
       isNftOwnerOrHasPermission(from)

@@ -9,7 +9,10 @@ contract Nft is ERC721Enumerable, Owned {
   using SafeTransferLib for address;
 
   event MintNft(uint indexed id, address indexed to);
+  event Grant  (uint indexed id, address indexed operator);
+  event Revoke (uint indexed id, address indexed operator);
 
+  error NotOwner             ();
   error PublicMintsExceeded  ();
   error InsiderMintsExceeded ();
   error IncorrectEthSacrifice();
@@ -29,8 +32,8 @@ contract Nft is ERC721Enumerable, Owned {
   mapping(uint => mapping (address => Permission)) public id2permission; 
   mapping(uint => uint)                            public id2lastOwnershipChange; 
 
-  modifier isNftOwnerOrHasPermission(uint id) {
-    if (!hasPermission(id, msg.sender)) revert MissingPermission() ; _;
+  modifier isNftOwner(uint id) {
+    if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
 
   constructor(
@@ -65,7 +68,6 @@ contract Nft is ERC721Enumerable, Owned {
       return id;
   }
 
-  /// @inheritdoc IDNft
   function grant(uint id, address operator) 
     external 
       isNftOwner(id) 
@@ -74,7 +76,6 @@ contract Nft is ERC721Enumerable, Owned {
       emit Grant(id, operator);
   }
 
-  /// @inheritdoc IDNft
   function revoke(uint id, address operator) 
     external 
       isNftOwner(id) 
