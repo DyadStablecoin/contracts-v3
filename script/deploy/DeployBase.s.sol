@@ -14,7 +14,11 @@ contract DeployBase is Script, Parameters {
     returns (address, address) {
       vm.startBroadcast();
 
-      Dyad dyad = new Dyad();
+      Dyad dyad = new Dyad(
+        "DYAD Stablecoin",
+        "ethDYAD",
+        owner
+      );
       DNft dNft = new DNft(
         address(dyad),
         oracle,
