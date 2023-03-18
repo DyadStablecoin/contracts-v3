@@ -34,9 +34,6 @@ contract Collateral {
 
   uint public constant MIN_COLLATERIZATION_RATIO = 3e18; // 300%
 
-  uint public insiderMints; // Number of insider mints
-  uint public publicMints;  // Number of public mints
-
   mapping(uint => uint) public id2collateral;
   mapping(uint => uint) public id2dyad;
 

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {Collateral} from "./DNftERC20.sol";
+import {Collateral} from "./Collateral.sol";
 import {Dyad} from "./Dyad.sol";
 import {Nft} from "./Nft.sol";
 
