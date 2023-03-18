@@ -16,6 +16,7 @@ contract Nft is ERC721Enumerable, Owned {
   error PublicMintsExceeded  ();
   error InsiderMintsExceeded ();
   error IncorrectEthSacrifice();
+  error NotLiquidator        ();
 
   uint public constant INSIDER_MINTS = 300; 
   uint public constant PUBLIC_MINTS  = 1700; 
@@ -54,7 +55,7 @@ contract Nft is ERC721Enumerable, Owned {
 
   function mintInsiderNft(address to)
     external 
-      onlyOwner
+      onlyOwner 
     returns (uint) {
       if (++insiderMints > INSIDER_MINTS) revert InsiderMintsExceeded();
       return _mintNft(to); 
@@ -105,10 +106,11 @@ contract Nft is ERC721Enumerable, Owned {
       isLiquidator[liquidator] = true;
   }
 
-  function transfer(
+  function liquidate(
       uint id, 
       address to 
   ) public {
+      if (!isLiquidator[msg.sender]) revert NotLiquidator();
       _transfer(ownerOf(id), to, id);
   }
 

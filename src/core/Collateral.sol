@@ -104,7 +104,7 @@ contract Collateral {
       if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
       id2collateral[id] += msg.value;
       if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
-      dNft.transfer(id, to);
+      dNft.liquidate(id, to);
       emit Liquidate(id, to);
   }
 
