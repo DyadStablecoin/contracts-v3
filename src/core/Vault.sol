@@ -2,6 +2,7 @@
 pragma solidity =0.8.17;
 
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {SafeTransferLib} from "@solmate/src/utils/SafeTransferLib.sol";
 import {FixedPointMathLib} from "@solmate/src/utils/FixedPointMathLib.sol";
@@ -12,7 +13,7 @@ import {IAggregatorV3} from "../interfaces/AggregatorV3Interface.sol";
 import {Dyad} from "./Dyad.sol";
 import {Nft} from "./Nft.sol";
 
-contract Collateral {
+contract Vault {
   using SafeTransferLib   for address;
   using SafeCast          for int;
   using FixedPointMathLib for uint;
@@ -39,6 +40,7 @@ contract Collateral {
 
   Nft           public dNft;
   Dyad          public dyad;
+  IERC20        public collateral;
   IAggregatorV3 public oracle;
 
   modifier isNftOwner(uint id) {
@@ -54,20 +56,22 @@ contract Collateral {
   constructor(
       address _dNft, 
       address _dyad,
+      address _collateral,
       address _oracle 
   ) {
-      dNft   = Nft(_dNft);
-      dyad   = Dyad(_dyad);
-      oracle = IAggregatorV3(_oracle);
+      dNft       = Nft(_dNft);
+      dyad       = Dyad(_dyad);
+      collateral = IERC20(_collateral);
+      oracle     = IAggregatorV3(_oracle);
   }
 
-  function deposit(uint id) 
+  function deposit(uint id, uint amount) 
     external 
-    payable
       isValidNft(id) 
   {
-    id2collateral[id] += msg.value;
-    emit Deposit(id, msg.value);
+    collateral.transferFrom(msg.sender, address(this), amount);
+    id2collateral[id] += amount;
+    emit Deposit(id, amount);
   }
 
   function withdraw(uint from, address to, uint amount) 
@@ -76,7 +80,7 @@ contract Collateral {
     {
       id2collateral[from] -= amount;
       if (_collatRatio(from) < MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
-      to.safeTransferETH(amount); // re-entrancy
+      collateral.transfer(to, amount);
       emit Withdraw(from, to, amount);
   }
 
@@ -98,11 +102,10 @@ contract Collateral {
     emit BurnDyad(id, amount);
   }
 
-  function liquidate(uint id, address to) 
-    external 
-    payable {
+  function liquidate(uint id, address to, uint amount) 
+    external {
       if (_collatRatio(id) >= MIN_COLLATERIZATION_RATIO) revert CrTooHigh(); 
-      id2collateral[id] += msg.value;
+      id2collateral[id] += amount;
       if (_collatRatio(id) <  MIN_COLLATERIZATION_RATIO) revert CrTooLow(); 
       dNft.liquidate(id, to);
       emit Liquidate(id, to);
@@ -116,7 +119,7 @@ contract Collateral {
       id2dyad[from] -= amount;
       uint eth       = amount*1e8 / _getEthPrice();
       id2collateral[from]  -= eth;
-      to.safeTransferETH(eth); // re-entrancy 
+      collateral.transfer(to, amount);
       emit Redeem(from, amount, to, eth);
       return eth;
   }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity =0.8.17;
 
-import {Collateral} from "./Collateral.sol";
+import {Vault} from "./Vault.sol";
 import {Dyad} from "./Dyad.sol";
 import {Nft} from "./Nft.sol";
 
@@ -17,26 +17,27 @@ contract Factory {
   constructor(address _nft) { nft = Nft(_nft); }
 
   function deploy(
-    address _token, 
+    address _collateral, 
     address _oracle,
     string memory _flavor 
   ) public {
-    require(!deployed[_token][_oracle]);
+    require(!deployed[_collateral][_oracle]);
 
     Dyad dyad = new Dyad(
       string.concat("DYAD-", _flavor),
       string.concat("d", _flavor),
       msg.sender
     );
-    Collateral collateral = new Collateral(
+    Vault vault = new Vault(
+      address(nft), 
       address(dyad),
-      _token,
+      _collateral,
       msg.sender
     );
 
-    nft.setLiquidator(address(collateral)); 
-    dyad.transferOwnership(address(collateral));
-    deployed[_token][_oracle] = true;
-    emit Deployed(address(collateral), address(dyad));
+    nft.setLiquidator(address(vault)); 
+    dyad.transferOwnership(address(vault));
+    deployed[_collateral][_oracle] = true;
+    emit Deployed(address(vault), address(dyad));
   }
 }

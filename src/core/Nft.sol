@@ -39,7 +39,7 @@ contract Nft is ERC721Enumerable, Owned {
   }
 
   constructor() ERC721("Dyad NFT", "dNFT") 
-    Owned(msg.sender) {}
+                Owned(msg.sender) {}
 
   function mintNft(address to)
     external 
