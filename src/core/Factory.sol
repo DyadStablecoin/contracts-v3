@@ -14,9 +14,7 @@ contract Factory {
 
   Nft public nft;
 
-  constructor(address _nft) {
-    nft = new Nft(_nft);
-  }
+  constructor(address _nft) { nft = Nft(_nft); }
 
   function deploy(
     address _token, 

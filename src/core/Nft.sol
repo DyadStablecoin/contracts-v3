@@ -38,10 +38,8 @@ contract Nft is ERC721Enumerable, Owned {
     if (ownerOf(id) != msg.sender) revert NotOwner(); _;
   }
 
-  constructor(
-      address _owner
-  ) ERC721("Dyad NFT", "dNFT") 
-    Owned(_owner) {}
+  constructor() ERC721("Dyad NFT", "dNFT") 
+    Owned(msg.sender) {}
 
   function mintNft(address to)
     external 
