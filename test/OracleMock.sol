@@ -14,7 +14,11 @@ contract OracleMock {
       uint256 startedAt,
       uint256 updatedAt,
       uint80 answeredInRound
-    ) {
+  ) {
       return (1, price, 1, 1, 1);  
-    }
+  }
+
+  function decimals() public pure returns (uint8) {
+    return 8;
+  }
 }
